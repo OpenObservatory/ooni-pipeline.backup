@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from pymongo import MongoClient
-import os
+from os.path import join, basename 
+from os import renames, walk
 import re
 import yaml
 
@@ -11,24 +12,23 @@ client = MongoClient(db_host, db_port)
 db = client.ooni
 
 def list_report_files(directory):
-    for dirpath, dirname, filenames in os.walk(directory):
+    for dirpath, dirname, filenames in walk(directory):
         for filename in filenames:
             if filename.endswith(".yamloo"):
-                yield os.path.join(dirpath, filename)
+                yield join(dirpath, filename)
 
 class ReportInserter(object):
     def __init__(self, report_file):
         try:
-            p,f = os.path.split(report_file)
-            cc = p.split('/')[-1]
-            assert re.match("[a-zA-Z]{2}",cc)
-            public_file = os.path.join(public_dir,cc,f)
-
             # Insert the report into the database
             self.fh = open(report_file)
             self._report = yaml.safe_load_all(self.fh)
             self.header = self._report.next()
-            self.header['report_file'] = report_file
+            cc = self.header['probe_cc']
+            assert re.match("[a-zA-Z]{2}",cc)
+
+            public_file = join(public_dir, cc, basename(report_file))
+            self.header['report_file'] = public_file
             self.rid = db.reports.insert(self.header)
 
             # Insert each measurement into the database
@@ -37,7 +37,7 @@ class ReportInserter(object):
                 db.measurements.insert(entry)
             
             # Move the report into the public directory
-            os.renames(report_file, public_file)
+            renames(report_file, public_file)
         except Exception, e:
             print e
 
