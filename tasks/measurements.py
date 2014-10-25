@@ -1,7 +1,7 @@
 
 def find_closest(controls, experiment):
-    start_time = experiment['start_time']
-    return min(controls, key=lambda x: abs(x.measurement['start_time'] - start_time))
+    start_time = experiment.get_start_time()
+    return min(controls, key=lambda x: abs(x.measurement.get_start_time() - start_time))
 
 def truth_table(experiment, control):
     result_experiment = experiment['success']
@@ -28,6 +28,12 @@ class Measurement(object):
 
     def get_country(self):
         return self.report['probe_cc']
+
+    def get_start_time(self):
+        if 'start_time' in self.measurement:
+            return self.measurement['start_time']
+        else:
+            return self.report['start_time']
 
     def is_bridge_reachability(self):
         return self.report['test_name'] == 'bridge_reachability'
