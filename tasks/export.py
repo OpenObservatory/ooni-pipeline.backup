@@ -8,7 +8,7 @@ class Measurement(object):
         self.measurement = measurement
         self.report_id = measurement['report_id']
         self.mongodb_client = mongodb_client
-        self.report = self.mongodb_client.reports.find_one("_id": self.report_id)
+        self.report = self.mongodb_client.reports.find_one({"_id": self.report_id})
 
     def get_test_name(self):
         return self.report['test_name']
@@ -16,14 +16,58 @@ class Measurement(object):
     def get_country(self):
         return self.report['probe_cc']
 
+    def is_bridge_reachability(self):
+        return self.report['test_name'] == 'bridge_reachability'
+
+    def scrub(self):
+        # This is private data of mongodb
+        del self.measurement['_id']
+        del self.measurement['report_id']
+
+    def add_status_field(self, controls):
+        """ Iterate measurements and embed the status field."""
+        closest_control = find_closest(controls, self.measurement)
+        status = truth_table(self.measurement, closest_control.measurement)
+        self.measurement['status'] = status
+
+    def add_tcp_connect_field(measurement):
+        pass
+
 class Measurements(object):
-    def __init__(self):
+    def __init__(self, measurements, db):
         self.measurements = []
+        self.db = db
         for measurement in measurements:
             self.add_measurement(measurement)
 
     def add_measurement(self, measurement):
-        self.measurements.append(Measurement(measurement))
+        self.measurements.append(Measurement(measurement, self.db))
+
+    def get_experiments(self):
+        # Experiments is a map from a country code to an experiment
+        # measurement.
+        experiments = {}
+        for measurement in self.measurements:
+            if not measurement.is_bridge_reachability():
+                continue
+
+            country = measurement.get_country()
+            if country != 'NL':
+                if country not in experiments:
+                    experiments[country] = []
+                experiments[country].append(measurement)
+        return experiments
+
+    def get_controls_list(self):
+        controls = []
+        for measurement in self.measurements:
+            if not measurement.is_bridge_reachability():
+                continue
+
+            country = measurement.get_country()
+            if country == 'NL':
+                controls.append(measurement)
+        return controls
 
     def __iter__(self):
         return self
@@ -38,7 +82,8 @@ def print_usage():
     sys.exit(-1)
 
 def find_closest(controls, experiment):
-    return min(controls, key=lambda x: abs(x['start_time'] - experiment['start_time']))
+    start_time = experiment['start_time']
+    return min(controls, key=lambda x: abs(x.measurement['start_time'] - start_time))
 
 def truth_table(experiment, control):
     result_experiment = experiment['success']
@@ -59,25 +104,6 @@ def get_hashes(hashes_filename):
     hashes = [h.rstrip() for h in hashes]
     return hashes
 
-def get_experiment_measurements(measurements):
-    # Experiments is a map from a country code to an experiment
-    # measurement.
-    experiments = {}
-    for measurement in measurements:
-        country = measurement.get_country()
-        if country != 'NL':
-            experiments[country] = measurement
-    return experiments
-
-def add_tcp_connect_field(measurement):
-    pass
-
-def add_status_field(measurement, controls):
-    """ Iterate measurements and embed the status field."""
-    closest_control = find_closest(controls, measurement)
-    status = truth_table(measurement, closest_control)
-    measurement['status'] = status
-
 def get_output(measurements):
     """
     Generate the output
@@ -91,26 +117,24 @@ def get_output(measurements):
     """
     output = {}
 
-    experiments = get_experiment_measurements(measurements)
-    controls = country_measurements['NL']
+    experiments = measurements.get_experiments()
+    controls = measurements.get_controls_list()
 
     for country, measurements in experiments.items():
         if country not in output:
             output[country] = {}
-        # For each experimental measurement find the corresponding control measurement
-        # and compute the status field
+        # For each experimental measurement find the corresponding 
+        # control measurement and compute the status field
         for measurement in measurements:
-            add_status_field(measurement, controls)
-            add_tcp_connect_field(measurement)
+            measurement.add_status_field(controls)
+            measurement.add_tcp_connect_field()
 
-            # This is private data of mongodb
-            del measurement['_id']
-            del measurement['report_id']
+            measurement.scrub()
 
-            bridge = measurement['input']
+            bridge = measurement.measurement['input']
             if bridge not in output[country]:
                 output[country][bridge] = []
-            output[country][bridge].append(measurement)
+            output[country][bridge].append(measurement.measurement)
 
     return output
 
@@ -125,7 +149,7 @@ def main(hashes_filename, output_filename):
     # Find measurements we are interested in.
     ms = db.measurements.find({"input": {"$in": hashes}})
 
-    measurements = Measurements(ms)
+    measurements = Measurements(ms, db)
 
     output = get_output(measurements)
     with open(output_filename, 'w') as fp:
