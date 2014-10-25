@@ -67,8 +67,6 @@ def archive_report(report_path):
     with tarfile.open(tar_file, "w:gz") as tar:
         tar.add(report_path)
 
-    return True
-
 def list_report_files(directory):
     for dirpath, dirname, filenames in os.walk(directory):
         for filename in filenames:
@@ -309,10 +307,12 @@ for report_file in list_report_files(reports_directory):
 
     print("Moving original unsanitised file to archive: "+report_file)
 
-    if archive_report(report_file):
-        os.remove(report_file)
+    archive_report(report_file)
 
     report.close()
+
+    os.remove(report_file)
+
     report_counter += 1
 
 if report_counter > 0:
