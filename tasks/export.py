@@ -39,13 +39,15 @@ def get_experiment_measurements(country_measurements):
     return experiments
 
 def add_tcp_connect_field(measurement):
-    pass
+    if measurement['test_name'] == 'tcp_connect':
+        measurement['tcp_
 
 def add_status_field(measurement, controls):
     """ Iterate measurements and embed the status field."""
-    closest_control = find_closest(controls, measurement)
-    status = truth_table(measurement, closest_control)
-    measurement['status'] = status
+    if measurement['test_name'] == 'bridge_reachability':
+        closest_control = find_closest(controls, measurement)
+        status = truth_table(measurement, closest_control)
+        measurement['status'] = status
 
 def get_output(country_measurements):
     """
