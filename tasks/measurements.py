@@ -3,6 +3,7 @@ def find_closest(controls, experiment):
     start_time = experiment.get_start_time()
     return min(controls, key=lambda x: abs(x.get_start_time() - start_time))
 
+
 def truth_table(experiment, control):
     result_experiment = experiment['success']
     result_control = control['success']
@@ -15,6 +16,10 @@ def truth_table(experiment, control):
         return "blocked"
     elif result_experiment == False and result_control == False:
         return "offline"
+    else:
+        print experiment, control
+        assert True == False
+
 
 class Measurement(object):
     def __init__(self, measurement, mongodb_client):
@@ -52,6 +57,7 @@ class Measurement(object):
     def add_tcp_connect_field(self):
         if self.report['test_name'] == 'tcp_connect':
             pass
+
 
 class Measurements(object):
     def __init__(self, measurements, db):
@@ -96,4 +102,3 @@ class Measurements(object):
         for measurement in self.measurements:
             yield measurement
         raise StopIteration
-
