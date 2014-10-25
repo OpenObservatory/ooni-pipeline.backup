@@ -1,7 +1,7 @@
 
 def find_closest(controls, experiment):
     start_time = experiment.get_start_time()
-    return min(controls, key=lambda x: abs(x.measurement.get_start_time() - start_time))
+    return min(controls, key=lambda x: abs(x.get_start_time() - start_time))
 
 def truth_table(experiment, control):
     result_experiment = experiment['success']
@@ -45,7 +45,7 @@ class Measurement(object):
 
     def add_status_field(self, controls):
         """ Iterate measurements and embed the status field."""
-        closest_control = find_closest(controls, self.measurement)
+        closest_control = find_closest(controls, self)
         status = truth_table(self.measurement, closest_control.measurement)
         self.measurement['status'] = status
 
