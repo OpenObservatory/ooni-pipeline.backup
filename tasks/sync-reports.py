@@ -87,7 +87,7 @@ report_counter = 0
 # them to a temporary if this is the case.
 # the name of the directory is returned by this method
 def get_report_list_via_rsync(remote):
-    rsync_cmd = "rsync -avz -e ssh "
+    rsync_cmd = "rsync --remove-source-files -avz -e ssh "
 
     temp_dir = tempfile.mkdtemp()
 
