@@ -297,14 +297,15 @@ for report_file in list_report_files(reports_directory):
 
     report_file_sanitised = open(report_filename_sanitised,'w')
 
-    report_file_sanitised.write(yaml.safe_dump(e))
+    report_file_sanitised.write(yaml.safe_dump(e, explicit_start=True,
+        explicit_end=True ))
 
     # this step actually santises the report contants because report is an
     # iterator class: by calling list(report), next_entry of the report instance
     # will be called which in turn calles self.process which does the acutal
     # sanitisation
     report_file_sanitised.write((yaml.safe_dump_all(list(report),
-        explicit_start=True)))
+        explicit_start=True, explicit_end=True)))
 
     print("Moving original unsanitised file to archive: "+report_file)
 
