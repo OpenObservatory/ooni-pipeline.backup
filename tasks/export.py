@@ -5,6 +5,7 @@ import pprint
 
 def print_usage():
     print "Usage: export <bridge_hashes_filename> <output_filename>"
+    sys.exit(-1)
 
 def find_closest(controls, experiment):
     return min(controls, key=lambda x: abs(x['start_time'] - experiment['start_time']))
@@ -71,12 +72,12 @@ def main(hashes_filename, output_filename):
     db = client.ooni
 
     # Find measurements we are interested in.
-    measurements = db.measurements.aggregate([{"$match": {"input": {"$in": hashes}}}])
+    measurements = db.measurements.find({"input": {"$in": hashes}})
 
     # Populate an auxiliary variable with the measurements of a report
     # report_ids is a map from a report_id to its [measurements]
     report_ids = {}
-    for measurement in measurements['result']:
+    for measurement in measurements:
         if not measurement['report_id'] in report_ids:
             report_ids[measurement['report_id']] = []
         report_ids[measurement['report_id']].append(measurement)
@@ -107,7 +108,6 @@ def main(hashes_filename, output_filename):
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print_usage()
-        sys.exit(-1)
     hashes_filename = sys.argv[1]
     output_filename = sys.argv[2]
-    output = main(hashes_filename, output_filename)
+    main(hashes_filename, output_filename)
