@@ -27,16 +27,17 @@ import hashlib
 import yaml
 import tarfile
 
-if len(sys.argv) != 5:
-    print("Usage: %s <bridge_db_mapping_file> <reports_directory> "\
-          "<sanitised_directory> <archive_directory>" % sys.argv[0])
-    sys.exit(1)
+# You must set these environment variables:
+# OONI_BRIDGE_DB_FILE
+# OONI_RAW_DIR
+# OONI_SANITISED_DIR
+# OONI_ARCHIVE_DIR
 
-bridge_db_mapping_file = sys.argv[1]
+bridge_db_mapping_file = os.environ['OONI_BRIDGE_DB_FILE']
 bridge_db_mapping = json.load(open(bridge_db_mapping_file))
-reports_directory = sys.argv[2]
-sanitised_directory = sys.argv[3]
-archive_directory = sys.argv[4]
+reports_directory = os.environ['OONI_RAW_DIR']
+sanitised_directory = os.environ['OONI_SANITISED_DIR']
+archive_directory = os.environ['OONI_ARCHIVE_DIR']
 
 if not os.path.isdir(reports_directory):
     print(reports_directory + " does not exist")

@@ -1,13 +1,23 @@
 #!/usr/bin/env python
+import os
 from pymongo import MongoClient
-from os.path import join, basename 
+from os.path import join, basename
 from os import renames, walk
 import re
 import yaml
 
-db_host, db_port = '127.0.0.1', 27017
-sanitized_dir = '/data/sanitized'
-public_dir = '/data/public'
+# You must set these environment variables:
+# OONI_RAW_DIR
+# OONI_SANITISED_DIR
+# OONI_PUBLIC_DIR
+# OONI_DB_IP
+# OONI_DB_PORT
+
+raw_directory = os.environ['OONI_RAW_DIR']
+sanitized_dir = os.environ['OONI_SANITISED_DIR']
+public_dir = os.environ['OONI_PUBLIC_DIR']
+
+db_host, db_port = os.environ['OONI_DB_IP'], os.environ['OONI_DB_PORT']
 client = MongoClient(db_host, db_port)
 db = client.ooni
 
@@ -35,7 +45,7 @@ class ReportInserter(object):
             for entry in self:
                 entry['report_id'] = self.rid
                 db.measurements.insert(entry)
-            
+
             # Move the report into the public directory
             renames(report_file, public_file)
         except Exception, e:
