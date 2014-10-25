@@ -5,7 +5,7 @@ import datetime
 client = MongoClient('127.0.0.1', 27017)
 db = client.ooni
 
-def add_random_to_reports(asn, country, random_date):
+def add_random_to_reports(asn, country, random_date, test_name):
     header = {
         "input_hashes": ["9c69e84894aafe3e1925432a2db62fe6713051334f2c357d2cb59323a365c0cb"],
         "options": ["-f", "bridges.txt", "-t", '400'],
@@ -16,12 +16,12 @@ def add_random_to_reports(asn, country, random_date):
         "software_name": "ooniprobe",
         "software_version": "1.2.2",
         "start_time": float(random_date.strftime("%s")),
-        "test_name": "bridge_reachability",
+        "test_name": test_name,
         "test_version": "0.1.1"
     }
     return db.reports.insert(header)
 
-def add_randoms_to_measurement(report_id, asn, country, random_date, pt, bridge_hash, dist):
+def add_randoms_to_measurement(report_id1, report_id2, asn, country, random_date, pt, bridge_hash, dist):
     entry = {
         "bridge_address": None,
         "error": "missing-fteproxy",
@@ -38,9 +38,18 @@ def add_randoms_to_measurement(report_id, asn, country, random_date, pt, bridge_
         "tor_progress_tag": None,
         "tor_version": "0.2.5.7-rc",
         "transport_name": pt,
-        "report_id": report_id
+        "report_id": report_id1
     }
     db.measurements.insert(entry)
+    entry = {
+        "input": bridge_hash,
+        "error": None,
+        "success": random.choice([True, False]),
+        "report_id": report_id2,
+        "start_time": float(int(random_date.strftime("%s")) + random.randint(100, 400)),
+    }
+    db.measurements.insert(entry)
+
 
 countries = [
     ("ASN4242", "IR"),
@@ -62,6 +71,7 @@ for asn, country in countries:
     for x in range (0, numdays):
         date = latest_time - datetime.timedelta(days = x)
         random_date = date - datetime.timedelta(minutes = random.randint(0, 420))
-        report_id = add_random_to_reports(asn, country, random_date)
+        report_id1 = add_random_to_reports(asn, country, random_date, "bridge_reachability")
+        report_id2 = add_random_to_reports(asn, country, random_date, "tcp_connect")
         for pt, bridge_hash, dist in bridge_hashes:
-            add_randoms_to_measurement(report_id, asn, country, random_date, pt, bridge_hash, dist)
+            add_randoms_to_measurement(report_id1, report_id2, asn, country, random_date, pt, bridge_hash, dist)
