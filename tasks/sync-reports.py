@@ -13,14 +13,18 @@ import json
 import yaml
 import shutil
 import tempfile
+from pymongo import MongoClient
 
-if len(sys.argv) != 4:
-    print("Usage: %s <raw_directory> <sanitised_directory> <remote_servers_file>" % sys.argv[0])
+if len(sys.argv) != 6:
+    print("Usage: %s <raw_directory> <sanitised_directory>"\
+            " <remote_servers_file> <db_host> <db_port>" % sys.argv[0])
     sys.exit(1)
 
 raw_directory = sys.argv[1]
 sanitised_directory = sys.argv[2]
 remote_servers_file = sys.argv[3]
+db_host = sys.argv[4]
+db_port = sys.argv[5]
 
 if not os.path.isdir(raw_directory):
     print(raw_directory + " does not exist")
@@ -80,6 +84,18 @@ class Report(object):
     def close(self):
         self.fh.close()
 
+def check_if_report_in_database(report, db):
+    result = db.reports.find_one({\
+                "probe_asn": report.asn,\
+                "start_time": report.start_time,\
+                "test_name": report.test_name,\
+                "input_hashes": report.input_hashes\
+                })
+
+    if result:
+        return True
+    return False
+
 report_list = []
 report_counter = 0
 
@@ -132,10 +148,12 @@ def readin_local_reports(directories):
 
     return reports
 
-def process(remote_servers):
+def process(remote_servers, db_host, db_port):
+
+    client = MongoClient(db_host, int(db_port))
+    db = client.ooni
 
     local_reports = readin_local_reports([raw_directory, sanitised_directory])
-
     count_reports = 0
 
     for server in remote_servers:
@@ -143,11 +161,18 @@ def process(remote_servers):
         # copies reports from remote server to temporary directory
         temp_dir = get_report_list_via_rsync(server)
 
-        remote_reports = read_reports_from_dir(temp_dir)
+        if temp_dir != None:
+            remote_reports = read_reports_from_dir(temp_dir)
+        else:
+            break
 
         for report in remote_reports:
 
             if report in local_reports:
+                # report is in raw or santised directories
+                pass
+            elif check_if_report_in_database(report, db):
+                # report was found in database
                 pass
             else:
                 print("Copying report into into raw directory: "+\
@@ -163,4 +188,4 @@ def process(remote_servers):
 
         shutil.rmtree(temp_dir)
 
-process(remote_servers)
+process(remote_servers, db_host, db_port)
