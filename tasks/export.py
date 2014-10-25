@@ -1,18 +1,20 @@
+import os
 import json
 from pymongo import MongoClient
-import sys
-from measurements import Measurement, Measurements
+from measurements import Measurements
 
-def print_usage():
-    print "Usage: export <bridge_hashes_filename> <output_filename>"
-    sys.exit(-1)
+db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
 
 
-def get_hashes(hashes_filename):
+def get_hashes(bridge_db_filename):
     """ Get hashes from filename input"""
-    hashes = open(hashes_filename).readlines()
-    hashes = [h.rstrip() for h in hashes]
+    with open(bridge_db_filename) as f:
+        bridge_db = json.loads(f)
+    hashes = []
+    for ip, value in bridge_db.items():
+        hashes.append(value['hashed_fingerprint'])
     return hashes
+
 
 def get_output(measurements):
     """
@@ -33,7 +35,7 @@ def get_output(measurements):
     for country, measurements in experiments.items():
         if country not in output:
             output[country] = {}
-        # For each experimental measurement find the corresponding 
+        # For each experimental measurement find the corresponding
         # control measurement and compute the status field
         for measurement in measurements:
             measurement.add_status_field(controls)
@@ -49,11 +51,11 @@ def get_output(measurements):
     return output
 
 
-def main(hashes_filename, output_filename):
-    hashes = get_hashes(hashes_filename)
+def main(bridge_db_filename, output_filename):
+    hashes = get_hashes(bridge_db_filename)
 
     # Connect to database
-    client = MongoClient('127.0.0.1', 27017)
+    client = MongoClient(db_ip, db_port)
     db = client.ooni
 
     # Find measurements we are interested in.
@@ -66,8 +68,7 @@ def main(hashes_filename, output_filename):
         json.dump(output, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print_usage()
-    hashes_filename = sys.argv[1]
-    output_filename = sys.argv[2]
-    main(hashes_filename, output_filename)
+    bridge_db_filename = os.environ['OONI_BRIDGE_DB_FILE']
+    output_filename = os.path.join(os.environ['OONI_PUBLIC_DIR'],
+                                   'bridges-by-country-code.json')
+    main(bridge_db_filename, output_filename)
