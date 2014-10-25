@@ -3,6 +3,36 @@ from pymongo import MongoClient
 import sys
 import pprint
 
+class Measurement(object):
+    def __init__(self, measurement, mongodb_client):
+        self.measurement = measurement
+        self.report_id = measurement['report_id']
+        self.mongodb_client = mongodb_client
+        self.report = self.mongodb_client.reports.find_one("_id": self.report_id)
+
+    def get_test_name(self):
+        return self.report['test_name']
+
+    def get_country(self):
+        return self.report['probe_cc']
+
+class Measurements(object):
+    def __init__(self):
+        self.measurements = []
+        for measurement in measurements:
+            self.add_measurement(measurement)
+
+    def add_measurement(self, measurement):
+        self.measurements.append(Measurement(measurement))
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        for measurement in self.measurements:
+            yield measurement
+        raise StopIteration
+
 def print_usage():
     print "Usage: export <bridge_hashes_filename> <output_filename>"
     sys.exit(-1)
@@ -29,27 +59,26 @@ def get_hashes(hashes_filename):
     hashes = [h.rstrip() for h in hashes]
     return hashes
 
-def get_experiment_measurements(country_measurements):
+def get_experiment_measurements(measurements):
     # Experiments is a map from a country code to an experiment
     # measurement.
     experiments = {}
-    for country, measurements in country_measurements.items():
+    for measurement in measurements:
+        country = measurement.get_country()
         if country != 'NL':
-            experiments[country] = measurements
+            experiments[country] = measurement
     return experiments
 
 def add_tcp_connect_field(measurement):
-    if measurement['test_name'] == 'tcp_connect':
-        measurement['tcp_
+    pass
 
 def add_status_field(measurement, controls):
     """ Iterate measurements and embed the status field."""
-    if measurement['test_name'] == 'bridge_reachability':
-        closest_control = find_closest(controls, measurement)
-        status = truth_table(measurement, closest_control)
-        measurement['status'] = status
+    closest_control = find_closest(controls, measurement)
+    status = truth_table(measurement, closest_control)
+    measurement['status'] = status
 
-def get_output(country_measurements):
+def get_output(measurements):
     """
     Generate the output
 
@@ -62,7 +91,7 @@ def get_output(country_measurements):
     """
     output = {}
 
-    experiments = get_experiment_measurements(country_measurements)
+    experiments = get_experiment_measurements(measurements)
     controls = country_measurements['NL']
 
     for country, measurements in experiments.items():
@@ -94,26 +123,11 @@ def main(hashes_filename, output_filename):
     db = client.ooni
 
     # Find measurements we are interested in.
-    measurements = db.measurements.find({"input": {"$in": hashes}})
+    ms = db.measurements.find({"input": {"$in": hashes}})
 
-    # Populate an auxiliary variable with the measurements of a report
-    # report_ids is a map from a report_id to its [measurements]
-    report_ids = {}
-    for measurement in measurements:
-        if not measurement['report_id'] in report_ids:
-            report_ids[measurement['report_id']] = []
-        report_ids[measurement['report_id']].append(measurement)
+    measurements = Measurements(ms)
 
-    country_measurements = {}
-    for report_id, measurements in report_ids.items():
-        report = db.reports.find_one({"_id": report_id})
-        country = report['probe_cc']
-
-        if country not in country_measurements:
-            country_measurements[country] = []
-        country_measurements[country].extend(measurements)
-
-    output = get_output(country_measurements)
+    output = get_output(measurements)
     with open(output_filename, 'w') as fp:
         json.dump(output, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
