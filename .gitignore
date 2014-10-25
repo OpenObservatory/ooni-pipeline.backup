@@ -1,2 +1,4 @@
 private/
+*.json
 *.pyc
+*.swp
