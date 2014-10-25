@@ -26,8 +26,6 @@ import json
 import hashlib
 import yaml
 import tarfile
-import shutil
-import tempfile
 
 if len(sys.argv) != 5:
     print("Usage: %s <bridge_db_mapping_file> <reports_directory> "\
@@ -131,7 +129,7 @@ class processor(object):
 
     @staticmethod
     def bridge_reachability(entry):
-        if entry['bridge_address'].strip() in bridge_db_mapping:
+        if entry.get('bridge_address') and entry['bridge_address'].strip() in bridge_db_mapping:
             b = bridge_db_mapping[entry['bridge_address'].strip()]
             entry['distributor'] = b['distributor']
             fingerprint = b['fingerprint']
