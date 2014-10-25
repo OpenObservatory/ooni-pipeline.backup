@@ -29,7 +29,25 @@ def get_hashes(hashes_filename):
     hashes = [h.rstrip() for h in hashes]
     return hashes
 
-def get_output(experiments, controls):
+def get_experiment_measurements(country_measurements):
+    # Experiments is a map from a country code to an experiment
+    # measurement.
+    experiments = {}
+    for country, measurements in country_measurements.items():
+        if country != 'NL':
+            experiments[country] = measurements
+    return experiments
+
+def add_tcp_connect_field(measurement):
+    pass
+
+def add_status_field(measurement, controls):
+    """ Iterate measurements and embed the status field."""
+    closest_control = find_closest(controls, measurement)
+    status = truth_table(measurement, closest_control)
+    measurement['status'] = status
+
+def get_output(country_measurements):
     """
     Generate the output
 
@@ -42,15 +60,17 @@ def get_output(experiments, controls):
     """
     output = {}
 
+    experiments = get_experiment_measurements(country_measurements)
+    controls = country_measurements['NL']
+
     for country, measurements in experiments.items():
         if country not in output:
             output[country] = {}
         # For each experimental measurement find the corresponding control measurement
         # and compute the status field
         for measurement in measurements:
-            closest_control = find_closest(controls, measurement)
-            status = truth_table(measurement, closest_control)
-            measurement['status'] = status
+            add_status_field(measurement, controls)
+            add_tcp_connect_field(measurement)
 
             # This is private data of mongodb
             del measurement['_id']
@@ -82,26 +102,16 @@ def main(hashes_filename, output_filename):
             report_ids[measurement['report_id']] = []
         report_ids[measurement['report_id']].append(measurement)
 
-    # For each report, assign it to be a control or experiment.
-
-    # Controls is a list of control measurements
-    controls = []
-    # Experiments is a map from a country code to an experiment
-    # measurement.
-    experiments = {}
+    country_measurements = {}
     for report_id, measurements in report_ids.items():
         report = db.reports.find_one({"_id": report_id})
         country = report['probe_cc']
 
-        # If country is the Netherlands, it's a control measurement.
-        if country == 'NL':
-            controls.extend(measurements)
-        else:
-            if country not in experiments:
-                experiments[country] = []
-            experiments[country].extend(measurements)
+        if country not in country_measurements:
+            country_measurements[country] = []
+        country_measurements[country].extend(measurements)
 
-    output = get_output(experiments, controls)
+    output = get_output(country_measurements)
     with open(output_filename, 'w') as fp:
         json.dump(output, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
