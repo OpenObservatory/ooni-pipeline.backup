@@ -12,57 +12,68 @@ start_time: 1407420650.560137
 test_name: bridge_reachability
 test_version: '0.1'
 ...
---- {bridge_address: null, bridge_hashed_fingerprint: a491b59b16b6fdb59f0b67efcfc95a7b52ac8fcd,
+---
+{bridge_address: null, bridge_hashed_fingerprint: a491b59b16b6fdb59f0b67efcfc95a7b52ac8fcd,
   distributor: tbb, error: null, input: a491b59b16b6fdb59f0b67efcfc95a7b52ac8fcd,
   success: true, timeout: 120, tor_log: null, tor_progress: 100, tor_progress_summary: Done,
   tor_progress_tag: done, tor_version: 0.2.4.20, transport_name: obfs3}
 ...
---- {bridge_address: '169.229.59.75:46328', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '169.229.59.75:46328', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs3 169.229.59.75:46328 AF9F66B7B04F8FF6F32D455F05135250A16543C9',
   success: true, timeout: 120, tor_log: null, tor_progress: 100, tor_progress_summary: Done,
   tor_progress_tag: done, tor_version: 0.2.4.20, transport_name: obfs3}
 ...
---- {bridge_address: '208.79.90.242:35658', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '208.79.90.242:35658', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs3 208.79.90.242:35658 BA61757846841D64A83EA2514C766CB92F1FB41F',
   success: true, timeout: 120, tor_log: null, tor_progress: 100, tor_progress_summary: Done,
   tor_progress_tag: done, tor_version: 0.2.4.20, transport_name: obfs3}
 ...
---- {bridge_address: '83.212.100.216:47870', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '83.212.100.216:47870', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs2 83.212.100.216:47870 1F01A7BB60F49FC96E0850A6BAD6D076DFEFAF80',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs2}
 ...
---- {bridge_address: '83.212.96.182:46602', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '83.212.96.182:46602', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs2 83.212.96.182:46602 6F058CBEF888EB20D1DEB9886909F1E812245D41',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs2}
 ...
---- {bridge_address: '70.182.182.109:54542', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '70.182.182.109:54542', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs2 70.182.182.109:54542 94C9E691688FAFDEC701A0788BD15BE8AD34ED35',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs2}
 ...
---- {bridge_address: '128.31.0.34:1051', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '128.31.0.34:1051', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs2 128.31.0.34:1051 CA7434F14A898C7D3427B8295A7F83446BC7F496',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs2}
 ...
---- {bridge_address: '83.212.101.2:45235', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '83.212.101.2:45235', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs2 83.212.101.2:45235 2ADFE7AA8D272C520D1FBFBF4E413F3A1B26313D',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs2}
 ...
---- {bridge_address: '83.212.101.2:42782', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '83.212.101.2:42782', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs3 83.212.101.2:42782 2ADFE7AA8D272C520D1FBFBF4E413F3A1B26313D',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs3}
 ...
---- {bridge_address: '83.212.101.2:443', bridge_hashed_fingerprint: null, distributor: null,
+---
+{bridge_address: '83.212.101.2:443', bridge_hashed_fingerprint: null, distributor: null,
   error: null, input: 'obfs3 83.212.101.2:443 2ADFE7AA8D272C520D1FBFBF4E413F3A1B26313D',
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs3}
 ...
---- {bridge_address: null, bridge_hashed_fingerprint: 5f702e8a307c5030f5fd4d560a8a25126039cc24,
+---
+{bridge_address: null, bridge_hashed_fingerprint: 5f702e8a307c5030f5fd4d560a8a25126039cc24,
   distributor: tbb, error: null, input: 5f702e8a307c5030f5fd4d560a8a25126039cc24,
   success: false, timeout: 120, tor_log: '', tor_progress: 0, tor_progress_summary: null,
   tor_progress_tag: null, tor_version: 0.2.4.20, transport_name: obfs3}
