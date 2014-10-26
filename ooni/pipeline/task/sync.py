@@ -12,13 +12,16 @@ import sys
 import yaml
 import shutil
 import tempfile
-from pymongo import MongoClient
+
+from ooni.pipeline import settings
+
 
 def list_report_files(directory):
     for dirpath, dirname, filenames in os.walk(directory):
         for filename in filenames:
             if filename.endswith(".yamloo"):
                 yield os.path.join(dirpath, filename)
+
 
 class Report(object):
     def __init__(self, path):
@@ -51,19 +54,20 @@ class Report(object):
             return not self.__eq__(other)
 
     def dump_header(self):
-        print(str(self.asn)+" "+str(self.start_time)+" "+str(self.test_name)+\
-                " "+ str(self.input_hashes))
+        print("%s %s %s %s %s" % (self.asn, self.start_time, self.test_name,
+                                  self.input_hashes))
 
     def close(self):
         self.fh.close()
 
-def check_if_report_in_database(report, db):
-    result = db.reports.find_one({\
-                "probe_asn": report.asn,\
-                "start_time": report.start_time,\
-                "test_name": report.test_name,\
-                "input_hashes": report.input_hashes\
-                })
+
+def check_if_report_in_database(report):
+    result = settings.db.reports.find_one({
+        "probe_asn": report.asn,
+        "start_time": report.start_time,
+        "test_name": report.test_name,
+        "input_hashes": report.input_hashes
+    })
 
     if result:
         return True
@@ -118,12 +122,9 @@ def readin_local_reports(directories):
 
     return reports
 
-def process(raw_directory, sanitised_directory, remote_servers, db_host, db_port):
-
-    client = MongoClient(db_host, int(db_port))
-    db = client.ooni
-
-    local_reports = readin_local_reports([raw_directory, sanitised_directory])
+def process(remote_servers):
+    local_reports = readin_local_reports([settings.raw_directory,
+                                          settings.sanitised_directory])
     count_reports = 0
 
     for server in remote_servers:
@@ -141,30 +142,30 @@ def process(raw_directory, sanitised_directory, remote_servers, db_host, db_port
             if report in local_reports:
                 # report is in raw or santised directories
                 pass
-            elif check_if_report_in_database(report, db):
+            elif check_if_report_in_database(report):
                 # report was found in database
                 pass
             else:
                 print("Copying report into into raw directory: "+\
-                        report.report_path + " " + raw_directory)
+                        report.report_path + " " + settings.raw_directory)
 
                 report_file = os.path.split(report.report_path)[-1]
-                newname = os.path.join(raw_directory, report_file)
+                newname = os.path.join(settings.raw_directory, report_file)
                 os.rename(report.report_path, newname)
                 count_reports += 1
 
         print("Found "+str(count_reports)+" reports on "+ server + " that "+\
-                "were not locally present and copied them to: "+raw_directory)
+                "were not locally present and copied them to: "+settings.raw_directory)
 
         shutil.rmtree(temp_dir)
 
-def main(raw_directory, sanitised_directory, remote_servers_file, db_host, db_port):
-    if not os.path.isdir(raw_directory):
-        print(raw_directory + " does not exist")
+def main(remote_servers_file):
+    if not os.path.isdir(settings.raw_directory):
+        print(settings.raw_directory + " does not exist")
         sys.exit(1)
 
-    if not os.path.isdir(sanitised_directory):
-        print(sanitised_directory + " does not exist")
+    if not os.path.isdir(settings.sanitised_directory):
+        print(settings.sanitised_directory + " does not exist")
         sys.exit(1)
 
     if not os.path.isfile(remote_servers_file):
@@ -174,17 +175,8 @@ def main(raw_directory, sanitised_directory, remote_servers_file, db_host, db_po
     with open(remote_servers_file) as f:
             remote_servers = [line.strip() for line in f]
 
-    process(raw_directory, sanitised_directory, remote_servers, db_host, db_port)
+    process(remote_servers)
 
 
 if __name__ == "__main__":
-    db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
-    bridge_db_filename = os.environ['OONI_BRIDGE_DB_FILE']
-    bridge_by_country_output = os.path.join(os.environ['OONI_PUBLIC_DIR'],
-                                            'bridges-by-country-code.json')
-    sanitised_directory = os.environ['OONI_SANITISED_DIR']
-    remote_servers_file = os.environ['OONI_REMOTE_SERVERS_FILE']
-    raw_directory = os.environ['OONI_RAW_DIR']
-
-    main(raw_directory, sanitised_directory, remote_servers_file, db_ip,
-         db_port)
+    main(settings.remote_servers_file)

@@ -5,12 +5,13 @@
 # 1. read yaml files from reports directory
 # 2. santised yaml filenames
 #
-#    for every bridge that is listed in the file <bridge_db_mapping_file> do the
-#    following sanitisation
+#    for every bridge that is listed in the file <bridge_db_mapping_file> do
+#    the following sanitisation
 #        - replace input field with a sha1 hash of it and call it
 #        bridge_hashed_fingerprint
 #        - set bridge_address to "null"
-#        - add field called "distributor" which contains the distribution method
+#        - add field called "distributor" which contains the distribution
+#        method
 #
 # 3. archive raw report to archive
 #
@@ -22,28 +23,17 @@ from __future__ import print_function
 import re
 import os
 import sys
-import json
 import hashlib
 import yaml
 import tarfile
+from ooni.pipeline import settings
 
-# You must set these environment variables:
-# OONI_BRIDGE_DB_FILE
-# OONI_RAW_DIR
-# OONI_SANITISED_DIR
-# OONI_ARCHIVE_DIR
-
-bridge_db_mapping_file = os.environ['OONI_BRIDGE_DB_FILE']
-bridge_db_mapping = json.load(open(bridge_db_mapping_file))
-reports_directory = os.environ['OONI_RAW_DIR']
-sanitised_directory = os.environ['OONI_SANITISED_DIR']
-archive_directory = os.environ['OONI_ARCHIVE_DIR']
 
 def archive_report(report_path):
 
     # zip files
     tar_name = os.path.split(report_path)[-1]
-    tar_file = os.path.join(archive_directory, tar_name) + ".gz"
+    tar_file = os.path.join(settings.archive_directory, tar_name) + ".gz"
 
     if os.path.isfile(tar_file):
             print("Archive does already exist, overwriting")
@@ -51,11 +41,13 @@ def archive_report(report_path):
     with tarfile.open(tar_file, "w:gz") as tar:
         tar.add(report_path)
 
+
 def list_report_files(directory):
     for dirpath, dirname, filenames in os.walk(directory):
         for filename in filenames:
             if filename.endswith(".yamloo"):
                 yield os.path.join(dirpath, filename)
+
 
 class processor(object):
     @staticmethod
@@ -104,8 +96,8 @@ class processor(object):
 
     @staticmethod
     def bridge_reachability_tcp_connect(entry):
-        if entry['input'].strip() in bridge_db_mapping.keys():
-            b = bridge_db_mapping[entry['input'].strip()]
+        if entry['input'].strip() in settings.bridge_db_mapping.keys():
+            b = settings.bridge_db_mapping[entry['input'].strip()]
             fingerprint = b['fingerprint']
             hashed_fingerprint = hashlib.sha1(fingerprint.decode('hex')).hexdigest()
             entry['bridge_hashed_fingerprint'] = hashed_fingerprint
@@ -115,8 +107,8 @@ class processor(object):
 
     @staticmethod
     def bridge_reachability(entry):
-        if entry.get('bridge_address') and entry['bridge_address'].strip() in bridge_db_mapping:
-            b = bridge_db_mapping[entry['bridge_address'].strip()]
+        if entry.get('bridge_address') and entry['bridge_address'].strip() in settings.bridge_db_mapping:
+            b = settings.bridge_db_mapping[entry['bridge_address'].strip()]
             entry['distributor'] = b['distributor']
             fingerprint = b['fingerprint']
             hashed_fingerprint = hashlib.sha1(fingerprint.decode('hex')).hexdigest()
@@ -256,28 +248,28 @@ class Report(object):
         self.fh.close()
 
 def main():
-    if not os.path.isdir(archive_directory):
-        print(archive_directory + " does not exist")
+    if not os.path.isdir(settings.archive_directory):
+        print(settings.archive_directory + " does not exist")
         sys.exit(1)
 
-    if not os.path.isdir(reports_directory):
-        print(reports_directory + " does not exist")
+    if not os.path.isdir(settings.reports_directory):
+        print(settings.reports_directory + " does not exist")
         sys.exit(1)
 
-    if not os.path.isfile(bridge_db_mapping_file):
-        print(bridge_db_mapping_file + " does not exist")
+    if not os.path.isfile(settings.bridge_db_mapping_file):
+        print(settings.bridge_db_mapping_file + " does not exist")
         sys.exit(1)
 
-    if not os.path.isdir(sanitised_directory):
-        print(sanitised_directory + " does not exist")
+    if not os.path.isdir(settings.sanitised_directory):
+        print(settings.sanitised_directory + " does not exist")
         sys.exit(1)
 
     report_counter = 0
 
     # iterate over report files
-    for report_file in list_report_files(reports_directory):
+    for report_file in list_report_files(settings.reports_directory):
 
-        match = re.search("^" + re.escape(reports_directory) + "(.*)",
+        match = re.search("^" + re.escape(settings.reports_directory) + "(.*)",
                         report_file)
 
         # read report file
@@ -286,7 +278,7 @@ def main():
         e['report_file'] = match.group(1)
 
         report_filename = os.path.split(report_file)[-1]
-        report_filename_sanitised = os.path.join(sanitised_directory, report_filename)
+        report_filename_sanitised = os.path.join(settings.sanitised_directory, report_filename)
 
         if os.path.isfile(report_filename_sanitised):
             print("Sanitised report name already exists, overwriting: "+report_filename_sanitised)
@@ -318,7 +310,7 @@ def main():
     if report_counter > 0:
         print(str(report_counter)+" reports archived")
     else:
-        print("No reports were found in the: "+reports_directory)
+        print("No reports were found in the: "+settings.reports_directory)
 
 if __name__ == "__main__":
     main()

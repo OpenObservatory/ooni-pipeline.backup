@@ -1,4 +1,3 @@
-
 def find_closest(controls, experiment):
     start_time = experiment.get_start_time()
     return min(controls, key=lambda x: abs(x.get_start_time() - start_time))
