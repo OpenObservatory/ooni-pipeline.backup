@@ -2,10 +2,11 @@ import json
 from ooni.pipeline import settings
 from ooni.pipeline.measurements import Measurements
 
+
 def get_hashes(bridge_db_filename):
     """ Get hashes from filename input"""
     with open(bridge_db_filename) as f:
-        bridge_db = json.loads(f)
+        bridge_db = json.load(f)
     hashes = []
     for ip, value in bridge_db.items():
         hashes.append(value['hashed_fingerprint'])
@@ -19,8 +20,10 @@ def get_output(measurements):
     'output' is a map from country codes to 'bridge_dictionaries'.
     'bridge_dictionaries' is a map from bridges to their measurements.
     Example:
-    {"RU" : { "1.2.3.4:42040" : [ {"transport_name" ...}, {"transport_name ..."} ],
-            { "4.3.2.1:60465" : [ {"transport_name" ...}, {"transport_name ..."} ],
+    {"RU" : { "1.2.3.4:42040" : [ {"transport_name" ...},
+                                  {"transport_name ..."} ],
+            { "4.3.2.1:60465" : [ {"transport_name" ...},
+                                  {"transport_name ..."} ],
      "CN" : { ...}
     """
     output = {}
