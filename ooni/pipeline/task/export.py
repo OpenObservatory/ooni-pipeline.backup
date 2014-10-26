@@ -43,6 +43,7 @@ def generate_bridges_by_country_code(measurements):
         # control measurement and compute the status field
         for measurement in measurements:
             measurement.add_status_field(controls)
+            measurement.add_start_time()
             if measurement.add_tcp_connect_field(tcp_connects):
                 sys.stdout.write(".")
             else:
