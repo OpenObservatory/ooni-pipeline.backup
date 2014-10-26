@@ -1,9 +1,6 @@
-import os
 import json
-from pymongo import MongoClient
-from measurements import Measurements
-
-db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
+from ooni.pipeline import settings
+from ooni.pipeline.measurements import Measurements
 
 
 def get_hashes(bridge_db_filename):
@@ -54,21 +51,14 @@ def get_output(measurements):
 def main(bridge_db_filename, output_filename):
     hashes = get_hashes(bridge_db_filename)
 
-    # Connect to database
-    client = MongoClient(db_ip, db_port)
-    db = client.ooni
-
     # Find measurements we are interested in.
-    ms = db.measurements.find({"input": {"$in": hashes}})
+    ms = settings.db.measurements.find({"input": {"$in": hashes}})
 
-    measurements = Measurements(ms, db)
+    measurements = Measurements(ms, settings.db)
 
     output = get_output(measurements)
     with open(output_filename, 'w') as fp:
         json.dump(output, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
 if __name__ == "__main__":
-    bridge_db_filename = os.environ['OONI_BRIDGE_DB_FILE']
-    output_filename = os.path.join(os.environ['OONI_PUBLIC_DIR'],
-                                   'bridges-by-country-code.json')
-    main(bridge_db_filename, output_filename)
+    main(settings.bridge_db_filename, settings.bridge_by_country_code_output)
