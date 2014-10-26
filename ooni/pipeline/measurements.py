@@ -1,5 +1,6 @@
 import logging
 
+
 def find_closest(controls, experiment):
     start_time = experiment.get_start_time()
     return min(controls, key=lambda x: abs(x.get_start_time() - start_time))
@@ -9,13 +10,12 @@ def truth_table(experiment, control):
     result_experiment = experiment['success']
     result_control = control['success']
 
-
     if result_experiment not in [True, False] or result_control not in [True, False]:
         return "invalid"
 
-    if result_experiment == True and result_control == True:
+    if result_experiment and result_control:
         return "ok"
-    elif result_experiment == True and result_control == False:
+    elif result_experiment and result_control == False:
         return "inconsistent"
     elif result_experiment == False and result_control == True:
         return "blocked"
@@ -27,6 +27,7 @@ def truth_table(experiment, control):
 
 
 class Measurement(object):
+
     def __init__(self, measurement, mongodb_client):
         self.measurement = measurement
         self.report_id = measurement['report_id']
@@ -110,15 +111,20 @@ class Measurement(object):
         logging.debug("with %s", str(closest_tcpconnect.report))
         logging.debug("=====END=====")
 
-        self.measurement['tcp_connect_success'] = closest_tcpconnect.get_success_value()
-        self.measurement['tcp_connect_start_time'] = closest_tcpconnect.get_start_time()
-        self.measurement['tcp_connect_runtime'] = closest_tcpconnect.get_runtime()
+        self.measurement[
+            'tcp_connect_success'] = closest_tcpconnect.get_success_value()
+        self.measurement[
+            'tcp_connect_start_time'] = closest_tcpconnect.get_start_time()
+        self.measurement[
+            'tcp_connect_runtime'] = closest_tcpconnect.get_runtime()
         return True
 
     def __str__(self):
         return str(self.measurement)
 
+
 class Measurements(object):
+
     def __init__(self, measurements, db):
         self.measurements = []
         self.db = db
@@ -150,15 +156,17 @@ class Measurements(object):
         """
         input_hashes_list = set()
         for measurement in self.measurements:
-            try: input_hashes_list.add(measurement.report['input_hashes'][0])
-            except: pass
+            try:
+                input_hashes_list.add(measurement.report['input_hashes'][0])
+            except:
+                pass
 
         tcp_connects = []
-        for tcp_connect in self.mongodb_client.reports.find({
+        for tcp_connect in self.db.reports.find({
             "test_name": "tcp_connect",
             "input_hashes": {'$in': [[x] for x in input_hashes_list]}
         }):
-            for measurement in self.mongdb_client.measurements.find({
+            for measurement in self.db.measurements.find({
                 "report_id": tcp_connect['_id']
             }):
                 tcp_connects.append(Measurement(measurement, self.db))
