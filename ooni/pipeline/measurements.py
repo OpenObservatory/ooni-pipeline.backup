@@ -48,21 +48,19 @@ class Measurement(object):
         return self.report['probe_asn']
 
     def get_success_value(self):
-        return self.measurement['success']
+        return self.measurement.get('success')
 
     def get_runtime(self):
         if 'test_runtime' in self.measurement:
             return self.measurement['test_runtime']
-        elif 'test_runtime' in self.report:
-            return self.report['test_runtime']
         else:
-            return None
+            return self.report.get('test_runtime')
 
     def get_start_time(self):
         if 'start_time' in self.measurement:
             return self.measurement['start_time']
         else:
-            return self.report['start_time']
+            return self.report.get('start_time')
 
     def is_bridge_reachability(self):
         return self.report['test_name'] == 'bridge_reachability'
