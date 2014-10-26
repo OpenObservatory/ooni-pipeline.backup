@@ -48,7 +48,7 @@ class Measurement(object):
         return self.report['probe_asn']
 
     def get_success_value(self):
-        return self.measurement.get('success')
+        return self.measurement.get('connection')
 
     def get_runtime(self):
         if 'test_runtime' in self.measurement:
