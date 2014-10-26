@@ -24,7 +24,7 @@ class ReportInserter(object):
             cc = self.header['probe_cc']
             assert re.match("[a-zA-Z]{2}", cc)
 
-            public_file = join(settings.public_dir, cc, basename(report_file))
+            public_file = join(settings.public_directory, cc, basename(report_file))
             self.header['report_file'] = public_file
             self.rid = db.reports.insert(self.header)
 
