@@ -41,10 +41,12 @@ def get_output(measurements):
         # For each experimental measurement find the corresponding
         # control measurement and compute the status field
         for measurement in measurements:
-            sys.stdout.write(".")
-            sys.stdout.flush()
             measurement.add_status_field(controls)
-            measurement.add_tcpconnect_field(tcpconnects)
+            if measurement.add_tcpconnect_field(tcpconnects):
+                sys.stdout.write(".")
+            else:
+                sys.stdout.write("x")
+            sys.stdout.flush()
 
             measurement.scrub()
 

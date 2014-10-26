@@ -98,11 +98,10 @@ class Measurement(object):
                     candidate_measurements_list.append(measurement)
 
         if len(candidate_measurements_list) == 0:
-            print("[!] No tcp_connect measurement found")
             self.measurement['tcp_connect_success'] = None
             self.measurement['tcp_connect_start_time'] = None
             self.measurement['tcp_connect_runtime'] = None
-            return
+            return False
 
         # Now we should have a list of measurements that match the
         # test input and AS. Now we need to find the closest in time.
@@ -118,6 +117,7 @@ class Measurement(object):
         self.measurement['tcp_connect_success'] = closest_tcpconnect.get_success_value()
         self.measurement['tcp_connect_start_time'] = closest_tcpconnect.get_start_time()
         self.measurement['tcp_connect_runtime'] = closest_tcpconnect.get_runtime()
+        return True
 
     def __str__(self):
         return str(self.measurement)
