@@ -9,6 +9,9 @@ def truth_table(experiment, control):
     result_experiment = experiment['success']
     result_control = control['success']
 
+    if result_experiment not in [True, False] or result_control not in [True, False]:
+        return "invalid"
+
     if result_experiment == True and result_control == True:
         return "ok"
     elif result_experiment == True and result_control == False:
