@@ -53,8 +53,12 @@ class ReportInserter(object):
 
 
 def main():
+    report_count = 0
     for report_file in list_report_files(settings.sanitised_directory):
         ReportInserter(report_file, settings.db)
+        print("[+] Imported %s" % report_file)
+        report_count += 1
+    print("Imported %d reports" % report_count)
 
 if __name__ == "__main__":
     main()
