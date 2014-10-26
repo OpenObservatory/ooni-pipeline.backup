@@ -53,7 +53,7 @@ class ReportInserter(object):
 
 
 def main():
-    for report_file in list_report_files(settings.sanitised_dir):
+    for report_file in list_report_files(settings.sanitised_directory):
         ReportInserter(report_file, settings.db)
 
 if __name__ == "__main__":
