@@ -32,7 +32,7 @@ def get_output(measurements):
     experiments = measurements.get_experiments()
     controls = measurements.get_controls_list()
 
-    tcpconnects = measurements.get_tcpconnects()
+    tcp_connects = measurements.get_tcpconnects()
 
     for country, measurements in experiments.items():
         print("[+] Looking at %s" % country)
@@ -42,7 +42,7 @@ def get_output(measurements):
         # control measurement and compute the status field
         for measurement in measurements:
             measurement.add_status_field(controls)
-            if measurement.add_tcpconnect_field(tcpconnects):
+            if measurement.add_tcpconnect_field(tcp_connects):
                 sys.stdout.write(".")
             else:
                 sys.stdout.write("x")

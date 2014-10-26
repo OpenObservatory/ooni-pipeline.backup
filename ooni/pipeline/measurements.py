@@ -9,6 +9,7 @@ def truth_table(experiment, control):
     result_experiment = experiment['success']
     result_control = control['success']
 
+
     if result_experiment not in [True, False] or result_control not in [True, False]:
         return "invalid"
 
@@ -30,7 +31,8 @@ class Measurement(object):
         self.measurement = measurement
         self.report_id = measurement['report_id']
         self.mongodb_client = mongodb_client
-        self.report = self.mongodb_client.reports.find_one({"_id": self.report_id})
+        self.report = self.mongodb_client.reports.find_one({"_id":
+                                                            self.report_id})
 
     def get_test_name(self):
         return self.report['test_name']
@@ -78,30 +80,18 @@ class Measurement(object):
         status = truth_table(self.measurement, closest_control.measurement)
         self.measurement['status'] = status
 
-    def add_tcpconnect_field(self, tcpconnects):
+    def add_tcp_connect_field(self, tcp_connects):
         # Let's see if there is a corresponding TCP connect
         # measurement for this bridge reachability measurement
 
         candidate_measurements_list = []
 
-        for test_input, measurements in tcpconnects.items():
-
-            print "Measurement length for %s" % test_input
-            print len(measurements)
-
-            # First filter by test input
-            if test_input != self.get_test_input():
-                continue
-
-            # Now loop over all the candidate tcpconnect measurements
-            # and filter by ASN.
-            for measurement in measurements:
-                assert(measurement.get_test_name() == 'tcp_connect')
-
-                if measurement.get_asn() == self.get_asn():
-                    logging.debug("Found potential TCPConnect match: %s %s",
-                                  measurement.measurement, self.measurement)
-                    candidate_measurements_list.append(measurement)
+        for measurement in [x for x in tcp_connects]:
+            assert(measurement.get_test_name() == "tcp_connect")
+            if measurement.get_asn() == self.get_asn():
+                logging.debug("Found potential TCPConnect match: %s %s",
+                              measurement.measurement, self.measurement)
+                candidate_measurements_list.append(measurement)
 
         if len(candidate_measurements_list) == 0:
             self.measurement['tcp_connect_success'] = None
@@ -153,26 +143,25 @@ class Measurements(object):
                 experiments[country].append(measurement)
         return experiments
 
-    def get_tcpconnects(self):
+    def get_tcp_connects(self):
         """
         Return a dictionary from an input to a list of tcpconnect
         measurements.
         """
-        tcpconnects = {}
-
+        input_hashes_list = set()
         for measurement in self.measurements:
-            test_input = measurement.get_test_input()
+            input_hashes_list.add(measurement.report['input_hashes'])
 
-            if measurement.is_tcpconnect():
-                print("IS TCP CONNECT %s" % test_input)
-                if test_input not in tcpconnects:
-                    tcpconnects[test_input] = []
-
-                tcpconnects[test_input].append(measurement)
-            else:
-                print("NO %s" % measurement)
-
-        return tcpconnects
+        tcp_connects = []
+        for tcp_connect in self.mongodb_client.reports.find({
+            "test_name": "tcp_connect",
+            "input_hashes": {'$in': list(input_hashes_list)}
+        }):
+            for measurement in self.mongdb_client.measurements.find({
+                "report_id": tcp_connect['_id']
+            }):
+                tcp_connects.append(Measurement(measurement, self.db))
+        return tcp_connects
 
     def get_controls_list(self):
         controls = []
