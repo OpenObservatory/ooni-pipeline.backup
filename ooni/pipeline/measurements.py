@@ -86,6 +86,9 @@ class Measurement(object):
 
         for test_input, measurements in tcpconnects.items():
 
+            print "Measurement length for %s" % test_input
+            print len(measurements)
+
             # First filter by test input
             if test_input != self.get_test_input():
                 continue
