@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 from ooni.pipeline import settings
@@ -14,7 +15,7 @@ def get_hashes(bridge_db_filename):
     return hashes
 
 
-def get_output(measurements):
+def generate_bridges_by_country_code(measurements):
     """
     Generate the output
 
@@ -32,7 +33,7 @@ def get_output(measurements):
     experiments = measurements.get_experiments()
     controls = measurements.get_controls_list()
 
-    tcpconnects = measurements.get_tcpconnects()
+    tcp_connects = measurements.get_tcp_connects()
 
     for country, measurements in experiments.items():
         print("[+] Looking at %s" % country)
@@ -41,10 +42,13 @@ def get_output(measurements):
         # For each experimental measurement find the corresponding
         # control measurement and compute the status field
         for measurement in measurements:
-            sys.stdout.write(".")
-            sys.stdout.flush()
             measurement.add_status_field(controls)
-            measurement.add_tcpconnect_field(tcpconnects)
+            measurement.add_start_time()
+            if measurement.add_tcp_connect_field(tcp_connects):
+                sys.stdout.write(".")
+            else:
+                sys.stdout.write("x")
+            sys.stdout.flush()
 
             measurement.scrub()
 
@@ -57,17 +61,39 @@ def get_output(measurements):
 
     return output
 
+def generate_summary(bridges_by_country_code):
+    summary = {}
+
+    for country, bridge_by_hash in bridges_by_country_code.items():
+        transport_hash = {}
+        for bridge_hash, measurements in bridge_by_hash.items():
+            # The transport will always be the same
+            transport_name = measurements[0]["transport_name"]
+            if 'transport_name' not in transport_hash:
+                transport_hash[transport_name] = []
+            d = {}
+            #d[bridge_hash] =
+            transport_hash[transport_name].append(d)
+
+        summary[country] = transport_hash
 
 def main(bridge_db_filename, output_filename):
+    # summary_file = os.path.join(os.path.basename(output_filename),
+    #                             "summary.json")
+
     hashes = get_hashes(bridge_db_filename)
 
     # Find measurements we are interested in.
     ms = settings.db.measurements.find({"input": {"$in": hashes}})
     measurements = Measurements(ms, settings.db)
 
-    output = get_output(measurements)
+    bridges_by_country_code = generate_bridges_by_country_code(measurements)
     with open(output_filename, 'w') as fp:
-        json.dump(output, fp, sort_keys=True, indent=4, separators=(',', ': '))
+        json.dump(bridges_by_country_code, fp, sort_keys=True, indent=4, separators=(',', ': '))
+    # summary = generate_summary(bridges_by_country_code)
+    # with open(summary_file, 'w') as fp:
+    #     json.dump(summary, fp, sort_keys=True, indent=4, separators=(',', ': '))
+
 
 if __name__ == "__main__":
     main(settings.bridge_db_filename, settings.bridge_by_country_code_output)

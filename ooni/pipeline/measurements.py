@@ -1,5 +1,6 @@
 import logging
 
+
 def find_closest(controls, experiment):
     start_time = experiment.get_start_time()
     return min(controls, key=lambda x: abs(x.get_start_time() - start_time))
@@ -9,9 +10,12 @@ def truth_table(experiment, control):
     result_experiment = experiment['success']
     result_control = control['success']
 
-    if result_experiment == True and result_control == True:
+    if result_experiment not in [True, False] or result_control not in [True, False]:
+        return "invalid"
+
+    if result_experiment and result_control:
         return "ok"
-    elif result_experiment == True and result_control == False:
+    elif result_experiment and result_control == False:
         return "inconsistent"
     elif result_experiment == False and result_control == True:
         return "blocked"
@@ -23,11 +27,13 @@ def truth_table(experiment, control):
 
 
 class Measurement(object):
+
     def __init__(self, measurement, mongodb_client):
         self.measurement = measurement
         self.report_id = measurement['report_id']
         self.mongodb_client = mongodb_client
-        self.report = self.mongodb_client.reports.find_one({"_id": self.report_id})
+        self.report = self.mongodb_client.reports.find_one({"_id":
+                                                            self.report_id})
 
     def get_test_name(self):
         return self.report['test_name']
@@ -42,21 +48,19 @@ class Measurement(object):
         return self.report['probe_asn']
 
     def get_success_value(self):
-        return self.measurement['success']
+        return self.measurement.get('connection')
 
     def get_runtime(self):
         if 'test_runtime' in self.measurement:
             return self.measurement['test_runtime']
-        elif 'test_runtime' in self.report:
-            return self.report['test_runtime']
         else:
-            return None
+            return self.report.get('test_runtime')
 
     def get_start_time(self):
         if 'start_time' in self.measurement:
             return self.measurement['start_time']
         else:
-            return self.report['start_time']
+            return self.report.get('start_time')
 
     def is_bridge_reachability(self):
         return self.report['test_name'] == 'bridge_reachability'
@@ -75,27 +79,28 @@ class Measurement(object):
         status = truth_table(self.measurement, closest_control.measurement)
         self.measurement['status'] = status
 
-    def add_tcpconnect_field(self, tcpconnects):
+    def add_start_time(self):
+        self.measurement['start_time'] = self.get_start_time()
+        self.measurement['test_runtime'] = self.get_runtime()
+
+    def add_tcp_connect_field(self, tcp_connects):
         # Let's see if there is a corresponding TCP connect
         # measurement for this bridge reachability measurement
 
         candidate_measurements_list = []
 
-        for test_input, measurements in tcpconnects.items():
+        for measurement in [x for x in tcp_connects]:
+            assert(measurement.get_test_name() == "tcp_connect")
+            if measurement.get_asn() == self.get_asn():
+                logging.debug("Found potential TCPConnect match: %s %s",
+                              measurement.measurement, self.measurement)
+                candidate_measurements_list.append(measurement)
 
-            # First filter by test input
-            if test_input != self.get_test_input():
-                continue
-
-            # Now loop over all the candidate tcpconnect measurements
-            # and filter by ASN.
-            for measurement in measurements:
-                assert(measurement.get_test_name() == 'tcp_connect')
-
-                if measurement.get_asn() == self.get_asn():
-                    logging.debug("Found potential TCPConnect match: %s %s",
-                                  measurement.measurement, self.measurement)
-                    candidate_measurements_list.append(measurement)
+        if len(candidate_measurements_list) == 0:
+            self.measurement['tcp_connect_success'] = None
+            self.measurement['tcp_connect_start_time'] = None
+            self.measurement['tcp_connect_runtime'] = None
+            return False
 
         # Now we should have a list of measurements that match the
         # test input and AS. Now we need to find the closest in time.
@@ -108,14 +113,20 @@ class Measurement(object):
         logging.debug("with %s", str(closest_tcpconnect.report))
         logging.debug("=====END=====")
 
-        self.measurement['tcp_connect_success'] = closest_tcpconnect.get_success_value()
-        self.measurement['tcp_connect_start_time'] = closest_tcpconnect.get_start_time()
-        self.measurement['tcp_connect_runtime'] = closest_tcpconnect.get_runtime()
+        self.measurement[
+            'tcp_connect_success'] = closest_tcpconnect.get_success_value()
+        self.measurement[
+            'tcp_connect_start_time'] = closest_tcpconnect.get_start_time()
+        self.measurement[
+            'tcp_connect_runtime'] = closest_tcpconnect.get_runtime()
+        return True
 
     def __str__(self):
         return str(self.measurement)
 
+
 class Measurements(object):
+
     def __init__(self, measurements, db):
         self.measurements = []
         self.db = db
@@ -140,23 +151,28 @@ class Measurements(object):
                 experiments[country].append(measurement)
         return experiments
 
-    def get_tcpconnects(self):
+    def get_tcp_connects(self):
         """
         Return a dictionary from an input to a list of tcpconnect
         measurements.
         """
-        tcpconnects = {}
-
+        input_hashes_list = set()
         for measurement in self.measurements:
-            test_input = measurement.get_test_input()
+            try:
+                input_hashes_list.add(measurement.report['input_hashes'][0])
+            except:
+                pass
 
-            if measurement.is_tcpconnect():
-                if test_input not in tcpconnects:
-                    tcpconnects[test_input] = []
-
-                tcpconnects[test_input].append(measurement)
-
-        return tcpconnects
+        tcp_connects = []
+        for tcp_connect in self.db.reports.find({
+            "test_name": "tcp_connect",
+            "input_hashes": {'$in': [[x] for x in input_hashes_list]}
+        }):
+            for measurement in self.db.measurements.find({
+                "report_id": tcp_connect['_id']
+            }):
+                tcp_connects.append(Measurement(measurement, self.db))
+        return tcp_connects
 
     def get_controls_list(self):
         controls = []
