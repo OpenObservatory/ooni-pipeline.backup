@@ -1,3 +1,4 @@
+import sys
 import json
 from ooni.pipeline import settings
 from ooni.pipeline.measurements import Measurements
@@ -34,11 +35,14 @@ def get_output(measurements):
     tcpconnects = measurements.get_tcpconnects()
 
     for country, measurements in experiments.items():
+        print("[+] Looking at %s" % country)
         if country not in output:
             output[country] = {}
         # For each experimental measurement find the corresponding
         # control measurement and compute the status field
         for measurement in measurements:
+            sys.stdout.write(".")
+            sys.stdout.flush()
             measurement.add_status_field(controls)
             measurement.add_tcpconnect_field(tcpconnects)
 
@@ -48,6 +52,8 @@ def get_output(measurements):
             if bridge not in output[country]:
                 output[country][bridge] = []
             output[country][bridge].append(measurement.measurement)
+        sys.stdout.write("\n")
+        print("[*] done.")
 
     return output
 
