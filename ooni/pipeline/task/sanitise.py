@@ -39,23 +39,8 @@ reports_directory = os.environ['OONI_RAW_DIR']
 sanitised_directory = os.environ['OONI_SANITISED_DIR']
 archive_directory = os.environ['OONI_ARCHIVE_DIR']
 
-if not os.path.isdir(reports_directory):
-    print(reports_directory + " does not exist")
-    sys.exit(1)
-
-if not os.path.isfile(bridge_db_mapping_file):
-    print(bridge_db_mapping_file + " does not exist")
-    sys.exit(1)
-
-if not os.path.isdir(sanitised_directory):
-    print(sanitised_directory + " does not exist")
-    sys.exit(1)
-
-if not os.path.isdir(archive_directory):
-    print(archive_directory + " does not exist")
-    sys.exit(1)
-
 def archive_report(report_path):
+
     # zip files
     tar_name = os.path.split(report_path)[-1]
     tar_file = os.path.join(archive_directory, tar_name) + ".gz"
@@ -270,51 +255,70 @@ class Report(object):
     def close(self):
         self.fh.close()
 
-report_list = []
-report_counter = 0
+def main():
+    if not os.path.isdir(archive_directory):
+        print(archive_directory + " does not exist")
+        sys.exit(1)
 
-# iterate over report files
-for report_file in list_report_files(reports_directory):
+    if not os.path.isdir(reports_directory):
+        print(reports_directory + " does not exist")
+        sys.exit(1)
 
-    match = re.search("^" + re.escape(reports_directory) + "(.*)",
-                      report_file)
+    if not os.path.isfile(bridge_db_mapping_file):
+        print(bridge_db_mapping_file + " does not exist")
+        sys.exit(1)
 
-    # read report file
-    report = Report(report_file)
-    e = report.header
-    e['report_file'] = match.group(1)
+    if not os.path.isdir(sanitised_directory):
+        print(sanitised_directory + " does not exist")
+        sys.exit(1)
 
-    report_filename = os.path.split(report_file)[-1]
-    report_filename_sanitised = os.path.join(sanitised_directory, report_filename)
+    report_counter = 0
 
-    if os.path.isfile(report_filename_sanitised):
-        print("Sanitised report name already exists, overwriting: "+report_filename_sanitised)
+    # iterate over report files
+    for report_file in list_report_files(reports_directory):
+
+        match = re.search("^" + re.escape(reports_directory) + "(.*)",
+                        report_file)
+
+        # read report file
+        report = Report(report_file)
+        e = report.header
+        e['report_file'] = match.group(1)
+
+        report_filename = os.path.split(report_file)[-1]
+        report_filename_sanitised = os.path.join(sanitised_directory, report_filename)
+
+        if os.path.isfile(report_filename_sanitised):
+            print("Sanitised report name already exists, overwriting: "+report_filename_sanitised)
+        else:
+            print("New report file: "+report_filename_sanitised)
+
+        report_file_sanitised = open(report_filename_sanitised,'w')
+
+        report_file_sanitised.write(yaml.safe_dump(e, explicit_start=True,
+            explicit_end=True ))
+
+        # this step actually santises the report contants because report is an
+        # iterator class: by calling list(report), next_entry of the report instance
+        # will be called which in turn calles self.process which does the acutal
+        # sanitisation
+        report_file_sanitised.write(yaml.safe_dump_all(list(report), explicit_start=True,
+                explicit_end=True, default_flow_style=False))
+
+        print("Moving original unsanitised file to archive: "+report_file)
+
+        archive_report(report_file)
+
+        report.close()
+
+        os.remove(report_file)
+
+        report_counter += 1
+
+    if report_counter > 0:
+        print(str(report_counter)+" reports archived")
     else:
-        print("New report file: "+report_filename_sanitised)
+        print("No reports were found in the: "+reports_directory)
 
-    report_file_sanitised = open(report_filename_sanitised,'w')
-
-    report_file_sanitised.write(yaml.safe_dump(e, explicit_start=True,
-        explicit_end=True ))
-
-    # this step actually santises the report contants because report is an
-    # iterator class: by calling list(report), next_entry of the report instance
-    # will be called which in turn calles self.process which does the acutal
-    # sanitisation
-    report_file_sanitised.write(yaml.safe_dump_all(list(report), explicit_start=True,
-            explicit_end=True, default_flow_style=False))
-
-    print("Moving original unsanitised file to archive: "+report_file)
-
-    archive_report(report_file)
-
-    report.close()
-
-    os.remove(report_file)
-
-    report_counter += 1
-
-if report_counter > 0:
-    print(str(report_counter)+" reports archived")
-else:
-    print("No reports were found in the: "+reports_directory)
+if __name__ == "__main__":
+    main()

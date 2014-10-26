@@ -1,10 +1,7 @@
 import os
 import json
 from pymongo import MongoClient
-from measurements import Measurements
-
-db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
-
+from ooni.pipeline.measurements import Measurements
 
 def get_hashes(bridge_db_filename):
     """ Get hashes from filename input"""
@@ -52,6 +49,8 @@ def get_output(measurements):
 
 
 def main(bridge_db_filename, output_filename):
+    db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
+
     hashes = get_hashes(bridge_db_filename)
 
     # Connect to database

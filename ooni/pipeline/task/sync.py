@@ -9,37 +9,10 @@ from __future__ import print_function
 import re
 import os
 import sys
-import json
 import yaml
 import shutil
 import tempfile
 from pymongo import MongoClient
-
-if len(sys.argv) != 6:
-    print("Usage: %s <raw_directory> <sanitised_directory>"\
-            " <remote_servers_file> <db_host> <db_port>" % sys.argv[0])
-    sys.exit(1)
-
-raw_directory = sys.argv[1]
-sanitised_directory = sys.argv[2]
-remote_servers_file = sys.argv[3]
-db_host = sys.argv[4]
-db_port = sys.argv[5]
-
-if not os.path.isdir(raw_directory):
-    print(raw_directory + " does not exist")
-    sys.exit(1)
-
-if not os.path.isdir(sanitised_directory):
-    print(sanitised_directory + " does not exist")
-    sys.exit(1)
-
-if not os.path.isfile(remote_servers_file):
-    print(remote_servers_file + " does not exist")
-    sys.exit(1)
-
-with open(remote_servers_file) as f:
-        remote_servers = [line.strip() for line in f]
 
 def list_report_files(directory):
     for dirpath, dirname, filenames in os.walk(directory):
@@ -96,9 +69,6 @@ def check_if_report_in_database(report, db):
         return True
     return False
 
-report_list = []
-report_counter = 0
-
 # checks if new reports are available remotely and returns copies
 # them to a temporary if this is the case.
 # the name of the directory is returned by this method
@@ -148,7 +118,7 @@ def readin_local_reports(directories):
 
     return reports
 
-def process(remote_servers, db_host, db_port):
+def process(raw_directory, sanitised_directory, remote_servers, db_host, db_port):
 
     client = MongoClient(db_host, int(db_port))
     db = client.ooni
@@ -188,4 +158,33 @@ def process(remote_servers, db_host, db_port):
 
         shutil.rmtree(temp_dir)
 
-process(remote_servers, db_host, db_port)
+def main(raw_directory, sanitised_directory, remote_servers_file, db_host, db_port):
+    if not os.path.isdir(raw_directory):
+        print(raw_directory + " does not exist")
+        sys.exit(1)
+
+    if not os.path.isdir(sanitised_directory):
+        print(sanitised_directory + " does not exist")
+        sys.exit(1)
+
+    if not os.path.isfile(remote_servers_file):
+        print(remote_servers_file + " does not exist")
+        sys.exit(1)
+
+    with open(remote_servers_file) as f:
+            remote_servers = [line.strip() for line in f]
+
+    process(raw_directory, sanitised_directory, remote_servers, db_host, db_port)
+
+
+if __name__ == "__main__":
+    db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
+    bridge_db_filename = os.environ['OONI_BRIDGE_DB_FILE']
+    bridge_by_country_output = os.path.join(os.environ['OONI_PUBLIC_DIR'],
+                                            'bridges-by-country-code.json')
+    sanitised_directory = os.environ['OONI_SANITISED_DIR']
+    remote_servers_file = os.environ['OONI_REMOTE_SERVERS_FILE']
+    raw_directory = os.environ['OONI_RAW_DIR']
+
+    main(raw_directory, sanitised_directory, remote_servers_file, db_ip,
+         db_port)

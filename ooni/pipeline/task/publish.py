@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# This is what used to be called import.py
 import os
 from pymongo import MongoClient
 from os.path import join, basename
@@ -17,10 +18,6 @@ raw_directory = os.environ['OONI_RAW_DIR']
 sanitized_dir = os.environ['OONI_SANITISED_DIR']
 public_dir = os.environ['OONI_PUBLIC_DIR']
 
-db_host, db_port = os.environ['OONI_DB_IP'], os.environ['OONI_DB_PORT']
-client = MongoClient(db_host, db_port)
-db = client.ooni
-
 def list_report_files(directory):
     for dirpath, dirname, filenames in walk(directory):
         for filename in filenames:
@@ -28,7 +25,7 @@ def list_report_files(directory):
                 yield join(dirpath, filename)
 
 class ReportInserter(object):
-    def __init__(self, report_file):
+    def __init__(self, report_file, db):
         try:
             # Insert the report into the database
             self.fh = open(report_file)
@@ -64,5 +61,14 @@ class ReportInserter(object):
             entry = self.next()
         return entry
 
-for report_file in list_report_files(sanitized_dir):
-    ReportInserter(report_file)
+
+def main():
+    db_host, db_port = os.environ['OONI_DB_IP'], os.environ['OONI_DB_PORT']
+    client = MongoClient(db_host, db_port)
+    db = client.ooni
+
+    for report_file in list_report_files(sanitized_dir):
+        ReportInserter(report_file, db)
+
+if __name__ == "__main__":
+    main()
