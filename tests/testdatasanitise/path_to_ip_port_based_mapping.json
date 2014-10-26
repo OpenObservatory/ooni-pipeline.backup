@@ -1,0 +1,20 @@
+{
+	"1.2.3.4:8980": {
+		"distributor": "tbb",
+		"fingerprint": "3F786850E387550FDAB836ED7E6DC881DE23001B",
+		"transport": "obfs3"
+	},
+
+	"1.2.3.5:47779": {
+		"distributor": "tbb",
+		"fingerprint": "89E6C98D92887913CADF06B2ADB97F26CDE4849B",
+		"transport": "obfs3"
+	},
+
+	"1.2.3.6:45235": {
+		"distributor": "tbb",
+		"fingerprint": "2B66FD261EE5C6CFC8DE7FA466BAB600BCFE4F69",
+		"transport": "obfs3"
+	}
+
+}
