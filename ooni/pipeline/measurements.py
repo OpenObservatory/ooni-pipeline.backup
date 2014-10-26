@@ -150,12 +150,13 @@ class Measurements(object):
         """
         input_hashes_list = set()
         for measurement in self.measurements:
-            input_hashes_list.add(measurement.report['input_hashes'])
+            try: input_hashes_list.add(measurement.report['input_hashes'][0])
+            except: pass
 
         tcp_connects = []
         for tcp_connect in self.mongodb_client.reports.find({
             "test_name": "tcp_connect",
-            "input_hashes": {'$in': list(input_hashes_list)}
+            "input_hashes": {'$in': [[x] for x in input_hashes_list]}
         }):
             for measurement in self.mongdb_client.measurements.find({
                 "report_id": tcp_connect['_id']
