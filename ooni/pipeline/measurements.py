@@ -79,6 +79,10 @@ class Measurement(object):
         status = truth_table(self.measurement, closest_control.measurement)
         self.measurement['status'] = status
 
+    def add_start_time(self):
+        self.measurement['start_time'] = self.get_start_time()
+        self.measurement['test_runtime'] = self.get_runtime()
+
     def add_tcp_connect_field(self, tcp_connects):
         # Let's see if there is a corresponding TCP connect
         # measurement for this bridge reachability measurement
