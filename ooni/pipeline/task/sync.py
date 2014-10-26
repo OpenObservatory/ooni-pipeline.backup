@@ -159,7 +159,7 @@ def process(remote_servers):
 
         shutil.rmtree(temp_dir)
 
-def main(remote_servers_file):
+def main():
     if not os.path.isdir(settings.raw_directory):
         print(settings.raw_directory + " does not exist")
         sys.exit(1)
@@ -168,15 +168,14 @@ def main(remote_servers_file):
         print(settings.sanitised_directory + " does not exist")
         sys.exit(1)
 
-    if not os.path.isfile(remote_servers_file):
-        print(remote_servers_file + " does not exist")
+    if not os.path.isfile(settings.remote_servers_file):
+        print(settings.remote_servers_file + " does not exist")
         sys.exit(1)
 
-    with open(remote_servers_file) as f:
+    with open(settings.remote_servers_file) as f:
             remote_servers = [line.strip() for line in f]
 
     process(remote_servers)
 
-
 if __name__ == "__main__":
-    main(settings.remote_servers_file)
+    main()
