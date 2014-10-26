@@ -35,6 +35,14 @@ class Measurement(object):
         self.report = self.mongodb_client.reports.find_one({"_id":
                                                             self.report_id})
 
+    def get_file_url(self):
+        report_path = self.report.get('report_file')
+        if report_path:
+            report_path = '/'.join(report_path.split("/")[-2:])
+        else:
+            report_path = ""
+        return "http://reports.ooni.nu/%s" % report_path
+
     def get_test_name(self):
         return self.report['test_name']
 
@@ -82,6 +90,9 @@ class Measurement(object):
     def add_start_time(self):
         self.measurement['start_time'] = self.get_start_time()
         self.measurement['test_runtime'] = self.get_runtime()
+
+    def add_file_url(self):
+        self.measurement['file_url'] = self.get_file_url()
 
     def add_tcp_connect_field(self, tcp_connects):
         # Let's see if there is a corresponding TCP connect
