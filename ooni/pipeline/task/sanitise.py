@@ -297,7 +297,7 @@ def main():
         report_file_sanitised.write(yaml.safe_dump_all(list(report), explicit_start=True,
                 explicit_end=True, default_flow_style=False))
 
-        print("Moving original unsanitised file to archive: "+report_file)
+        print("Moving original unsanitised file " + report_file + " to archive")
 
         archive_report(report_file)
 
