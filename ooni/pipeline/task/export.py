@@ -2,7 +2,6 @@ import json
 from ooni.pipeline import settings
 from ooni.pipeline.measurements import Measurements
 
-
 def get_hashes(bridge_db_filename):
     """ Get hashes from filename input"""
     with open(bridge_db_filename) as f:
@@ -29,6 +28,8 @@ def get_output(measurements):
     experiments = measurements.get_experiments()
     controls = measurements.get_controls_list()
 
+    tcpconnects = measurements.get_tcpconnects()
+
     for country, measurements in experiments.items():
         if country not in output:
             output[country] = {}
@@ -36,7 +37,7 @@ def get_output(measurements):
         # control measurement and compute the status field
         for measurement in measurements:
             measurement.add_status_field(controls)
-            measurement.add_tcp_connect_field()
+            measurement.add_tcpconnect_field(tcpconnects)
 
             measurement.scrub()
 
@@ -53,7 +54,6 @@ def main(bridge_db_filename, output_filename):
 
     # Find measurements we are interested in.
     ms = settings.db.measurements.find({"input": {"$in": hashes}})
-
     measurements = Measurements(ms, settings.db)
 
     output = get_output(measurements)
