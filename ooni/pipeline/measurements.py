@@ -164,10 +164,13 @@ class Measurements(object):
             test_input = measurement.get_test_input()
 
             if measurement.is_tcpconnect():
+                print("IS TCP CONNECT %s" % test_input)
                 if test_input not in tcpconnects:
                     tcpconnects[test_input] = []
 
                 tcpconnects[test_input].append(measurement)
+            else:
+                print("NO %s" % measurement)
 
         return tcpconnects
 
