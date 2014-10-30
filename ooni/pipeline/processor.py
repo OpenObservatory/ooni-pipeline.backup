@@ -66,6 +66,7 @@ def bridge_reachability(entry):
             entry['bridge_address'].strip() in settings.bridge_db_mapping:
         b = settings.bridge_db_mapping[entry['bridge_address'].strip()]
         entry['distributor'] = b['distributor']
+        entry['transport'] = b['transport']
         fingerprint = b['fingerprint'].decode('hex')
         hashed_fingerprint = hashlib.sha1(fingerprint).hexdigest()
         entry['input'] = hashed_fingerprint
