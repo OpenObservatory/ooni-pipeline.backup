@@ -81,7 +81,7 @@ def bridge_reachability(entry):
 
 
 def tcp_connect(entry):
-    entry = bridge_reachability(entry)
+    entry = bridge_reachability_tcp_connect(entry)
     return entry
 
 
