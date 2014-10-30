@@ -70,6 +70,14 @@ def bridge_reachability(entry):
         hashed_fingerprint = hashlib.sha1(fingerprint).hexdigest()
         entry['input'] = hashed_fingerprint
         entry['bridge_address'] = None
+        tor_log = ""
+        for line in entry['tor_log'].split("\n"):
+            if b['fingerprint'].upper() in line:
+                line = line.replace(b['fingerprint'].upper(),
+                                    hashed_fingerprint.upper())
+            tor_log += line
+            tor_log += '\n'
+        entry['tor_log'] = tor_log
     else:
         entry['distributor'] = None
         hashed_fingerprint = None
