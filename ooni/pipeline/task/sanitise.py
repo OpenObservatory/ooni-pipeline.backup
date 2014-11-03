@@ -27,7 +27,7 @@ import tarfile
 
 from yaml import safe_dump_all, safe_dump
 from ooni.pipeline import settings
-from ooni.report import Report
+from ooni.pipeline.report import Report
 
 
 def archive_report(report_path):
