@@ -1,4 +1,4 @@
-from ooni.processor import process, sanitise
+from ooni.pipeline.processor import process, sanitise
 
 sanitisers = {
     "http_host": sanitise.http_template,
