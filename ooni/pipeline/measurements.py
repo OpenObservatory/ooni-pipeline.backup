@@ -1,9 +1,25 @@
 import logging
+from ooni.pipeline import settings
 
 
 def find_closest(controls, experiment):
     start_time = experiment.get_start_time()
-    return min(controls, key=lambda x: abs(x.get_start_time() - start_time))
+    max_distance_sec = settings.max_distance_control_measurement * 60 * 60
+
+    if len(controls) == 0:
+        return None
+
+    best_match = min(controls, key=lambda x: abs(x.get_start_time() - start_time))
+
+    if max_distance_sec == None:
+        return best_match
+    if max_distance_sec > 0:
+        distance_best_match = abs(best_match.get_start_time() - start_time)
+
+        if int(distance_best_match) < max_distance_sec:
+            return best_match
+        else:
+            return None
 
 
 def truth_table(experiment, control):
@@ -84,8 +100,12 @@ class Measurement(object):
     def add_status_field(self, controls):
         """ Iterate measurements and embed the status field."""
         closest_control = find_closest(controls, self)
-        status = truth_table(self.measurement, closest_control.measurement)
-        self.measurement['status'] = status
+
+        if closest_control == None:
+            self.measurement['status'] = "inconclusive"
+        else:
+            status = truth_table(self.measurement, closest_control.measurement)
+            self.measurement['status'] = status
 
     def add_start_time(self):
         self.measurement['start_time'] = self.get_start_time()
