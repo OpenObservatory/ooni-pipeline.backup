@@ -2,19 +2,31 @@ import os
 import json
 from pymongo import MongoClient
 
-raw_directory = os.environ['OONI_RAW_DIR']
-sanitised_directory = os.environ['OONI_SANITISED_DIR']
-public_directory = os.environ['OONI_PUBLIC_DIR']
-reports_directory = os.environ['OONI_RAW_DIR']
-archive_directory = os.environ['OONI_ARCHIVE_DIR']
+raw_directory = os.environ.get('OONI_RAW_DIR')
+sanitised_directory = os.environ.get('OONI_SANITISED_DIR')
+public_directory = os.environ.get('OONI_PUBLIC_DIR')
+reports_directory = os.environ.get('OONI_RAW_DIR')
+archive_directory = os.environ.get('OONI_ARCHIVE_DIR')
 
-bridge_db_mapping_file = os.environ['OONI_BRIDGE_DB_FILE']
-bridge_db_mapping = json.load(open(bridge_db_mapping_file))
+bridge_db_mapping_file = os.environ.get('OONI_BRIDGE_DB_FILE')
+try:
+    bridge_db_mapping = json.load(open(bridge_db_mapping_file))
+except:
+    bridge_db_mapping = None
 
-bridge_db_filename = os.environ['OONI_BRIDGE_DB_FILE']
-bridge_by_country_code_output = os.path.join(os.environ['OONI_PUBLIC_DIR'],
-                                             'bridges-by-country-code.json')
-db_ip, db_port = os.environ['OONI_DB_IP'], int(os.environ['OONI_DB_PORT'])
+bridge_db_filename = os.environ.get('OONI_BRIDGE_DB_FILE')
+try:
+    bridge_by_country_code_output = os.path.join(public_directory,
+                                                 'bridges-by-country-code.json')
+except:
+    bridge_by_country_code_output = None
 
-mongo_client = MongoClient(db_ip, db_port)
-db = mongo_client.ooni
+try:
+    db_ip, db_port = os.environ.get('OONI_DB_IP'), int(os.environ.get('OONI_DB_PORT'))
+
+    mongo_client = MongoClient(db_ip, db_port)
+    db = mongo_client.ooni
+except:
+    db_ip, db_port = None, None
+    mongo_client = None
+    db = None

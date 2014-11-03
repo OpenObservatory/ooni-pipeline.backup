@@ -44,6 +44,7 @@ def generate_bridges_by_country_code(measurements):
         for measurement in measurements:
             measurement.add_status_field(controls)
             measurement.add_start_time()
+            measurement.add_file_url()
             if measurement.add_tcp_connect_field(tcp_connects):
                 sys.stdout.write(".")
             else:

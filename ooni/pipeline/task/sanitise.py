@@ -24,8 +24,10 @@ import re
 import os
 import sys
 import hashlib
-import yaml
 import tarfile
+
+from yaml import safe_load_all
+from yaml import safe_dump_all, safe_dump
 from ooni.pipeline import settings
 
 
@@ -53,25 +55,30 @@ class processor(object):
     @staticmethod
     def http_template(entry):
         if 'requests' not in entry or not entry['requests']:
-          return entry
+            return entry
         for i, _ in enumerate(entry['requests']):
-            try: del entry['requests'][i]['response']['body']
-            except: pass
+            try:
+                del entry['requests'][i]['response']['body']
+            except:
+                pass
         return entry
 
     @staticmethod
     def http_requests(entry):
-        try: entry['headers_diff'] = list(entry['headers_diff'])
-        except: pass
+        entry['headers_diff'] = list(entry['headers_diff'])
         return entry
 
     @staticmethod
     def scapy_template(entry):
-        try: entry['answered_packets'] = []
-        except: pass
+        try:
+            entry['answered_packets'] = []
+        except:
+            pass
 
-        try: entry['sent_packets'] = []
-        except: pass
+        try:
+            entry['sent_packets'] = []
+        except:
+            pass
         return entry
 
     @staticmethod
@@ -80,14 +87,13 @@ class processor(object):
 
     @staticmethod
     def dns_consistency(entry):
-        try: entry['tampering'] = entry['tampering'].items()
-        except: pass
+        entry['tampering'] = entry['tampering'].items()
         return entry
 
     @staticmethod
     def captive_portal(entry):
-        try: entry['vendor_dns_tests']['google_dns_cp'] = list(entry['vendor_dns_tests']['google_dns_cp'])
-        except: pass
+        entry['vendor_dns_tests']['google_dns_cp'] = \
+            list(entry['vendor_dns_tests']['google_dns_cp'])
         return entry
 
     @staticmethod
@@ -98,8 +104,8 @@ class processor(object):
     def bridge_reachability_tcp_connect(entry):
         if entry['input'].strip() in settings.bridge_db_mapping.keys():
             b = settings.bridge_db_mapping[entry['input'].strip()]
-            fingerprint = b['fingerprint']
-            hashed_fingerprint = hashlib.sha1(fingerprint.decode('hex')).hexdigest()
+            fingerprint = b['fingerprint'].decode('hex')
+            hashed_fingerprint = hashlib.sha1(fingerprint).hexdigest()
             entry['bridge_hashed_fingerprint'] = hashed_fingerprint
             entry['input'] = hashed_fingerprint
             return entry
@@ -107,11 +113,12 @@ class processor(object):
 
     @staticmethod
     def bridge_reachability(entry):
-        if entry.get('bridge_address') and entry['bridge_address'].strip() in settings.bridge_db_mapping:
+        if entry.get('bridge_address') and \
+                entry['bridge_address'].strip() in settings.bridge_db_mapping:
             b = settings.bridge_db_mapping[entry['bridge_address'].strip()]
             entry['distributor'] = b['distributor']
-            fingerprint = b['fingerprint']
-            hashed_fingerprint = hashlib.sha1(fingerprint.decode('hex')).hexdigest()
+            fingerprint = b['fingerprint'].decode('hex')
+            hashed_fingerprint = hashlib.sha1(fingerprint).hexdigest()
             entry['input'] = hashed_fingerprint
             entry['bridge_address'] = None
         else:
@@ -200,10 +207,11 @@ report_processor = {
     "keyword_filtering_detection_based_on_rst_packets": False
 }
 
+
 class Report(object):
     def __init__(self, path):
         self.fh = open(path)
-        self._report = yaml.safe_load_all(self.fh)
+        self._report = safe_load_all(self.fh)
         self.report_path = path
         self.header = self._report.next()
 
@@ -212,15 +220,22 @@ class Report(object):
         try:
             ps = report_processor[self.header['test_name']]
         except:
-             print("Unknown processor for %s: %s" %
-                   (self.header['test_name'], self.report_path))
+            print("Unknown processor for %s: %s" %
+                  (self.header['test_name'], self.report_path))
+            ps = False
 
         if isinstance(ps, list):
             for p in ps:
-                entry = p(entry)
+                try:
+                    entry = p(entry)
+                except:
+                    entry = entry
             return entry
         elif hasattr(ps, '__call__'):
-            return ps(entry)
+            try:
+                return ps(entry)
+            except:
+                return entry
         elif ps is False:
             return False
         else:
@@ -234,7 +249,7 @@ class Report(object):
         except Exception:
             self.next_entry()
         if not entry:
-          entry = self.next_entry()
+            entry = self.next_entry()
         entry = self.process(entry)
         return entry
 
@@ -246,6 +261,7 @@ class Report(object):
 
     def close(self):
         self.fh.close()
+
 
 def main():
     if not os.path.isdir(settings.archive_directory):
@@ -270,34 +286,33 @@ def main():
     for report_file in list_report_files(settings.reports_directory):
 
         match = re.search("^" + re.escape(settings.reports_directory) + "(.*)",
-                        report_file)
+                          report_file)
 
         # read report file
         report = Report(report_file)
-        e = report.header
-        e['report_file'] = match.group(1)
+        report_header = report.header
+        report_header['report_file'] = match.group(1)
 
         report_filename = os.path.split(report_file)[-1]
-        report_filename_sanitised = os.path.join(settings.sanitised_directory, report_filename)
+        report_filename_sanitised = os.path.join(settings.sanitised_directory,
+                                                 report_filename)
 
         if os.path.isfile(report_filename_sanitised):
-            print("Sanitised report name already exists, overwriting: "+report_filename_sanitised)
+            print("Sanitised report name already exists, overwriting: %s",
+                  report_filename_sanitised)
         else:
-            print("New report file: "+report_filename_sanitised)
+            print("New report file: %s",
+                  report_filename_sanitised)
 
-        report_file_sanitised = open(report_filename_sanitised,'w')
+        report_file_sanitised = open(report_filename_sanitised, 'w')
 
-        report_file_sanitised.write(yaml.safe_dump(e, explicit_start=True,
-            explicit_end=True ))
+        safe_dump(report_header, report_file_sanitised, explicit_start=True,
+                  explicit_end=True)
 
-        # this step actually santises the report contants because report is an
-        # iterator class: by calling list(report), next_entry of the report instance
-        # will be called which in turn calles self.process which does the acutal
-        # sanitisation
-        report_file_sanitised.write(yaml.safe_dump_all(list(report), explicit_start=True,
-                explicit_end=True, default_flow_style=False))
+        safe_dump_all(report, report_file_sanitised, explicit_start=True,
+                      explicit_end=True, default_flow_style=False)
 
-        print("Moving original unsanitised file " + report_file + " to archive")
+        print("Moving original unsanitised file %s to archive", report_file)
 
         archive_report(report_file)
 
@@ -308,9 +323,9 @@ def main():
         report_counter += 1
 
     if report_counter > 0:
-        print(str(report_counter)+" reports archived")
+        print("%d reports archived", report_counter)
     else:
-        print("No reports were found in the: "+settings.reports_directory)
+        print("No reports were found in the: %s", settings.reports_directory)
 
 if __name__ == "__main__":
     main()
