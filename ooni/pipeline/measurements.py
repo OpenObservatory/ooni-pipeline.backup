@@ -80,6 +80,12 @@ class Measurement(object):
         else:
             return self.report.get('test_runtime')
 
+    def get_address(self):
+        return self.measurement.get('bridge_address')
+
+    def get_hashed_fingerprint(self):
+        return self.measurement.get('bridge_hashed_fingerprint')
+
     def get_start_time(self):
         if 'start_time' in self.measurement:
             return self.measurement['start_time']
@@ -92,6 +98,16 @@ class Measurement(object):
     def is_tcpconnect(self):
         return self.report['test_name'] == 'tcp_connect'
 
+    # evaluates if self is a control measurement for the measurement m, ignoring
+    # the start time of the measurement
+    def is_control_for_measurement(self, m):
+        if self.get_test_name() == m.get_test_name() and self.get_country() == 'NL':
+            if self.get_address() == m.get_address():
+                return True
+            if self.get_hashed_fingerprint() == m.get_hashed_fingerprint():
+                return True
+        return False
+
     def scrub(self):
         # This is private data of mongodb
         del self.measurement['_id']
@@ -99,13 +115,10 @@ class Measurement(object):
 
     def add_status_field(self, controls):
         """ Iterate measurements and embed the status field."""
-        closest_control = find_closest(controls, self)
-
-        if closest_control == None:
-            self.measurement['status'] = "inconclusive"
-        else:
-            status = truth_table(self.measurement, closest_control.measurement)
-            self.measurement['status'] = status
+        filtered_controls = filter(lambda x: x.is_control_for_measurement(self), controls)
+        closest_control = find_closest(filtered_controls, self)
+        status = truth_table(self.measurement, closest_control.measurement)
+        self.measurement['status'] = status
 
     def add_start_time(self):
         self.measurement['start_time'] = self.get_start_time()
