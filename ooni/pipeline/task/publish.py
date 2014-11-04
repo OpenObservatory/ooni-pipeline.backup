@@ -5,6 +5,7 @@ from os import renames, walk
 import re
 import yaml
 from ooni.pipeline import settings
+from ooni.pipeline.processor import run_process
 
 
 def list_report_files(directory):
@@ -24,12 +25,16 @@ class ReportInserter(object):
             cc = self.header['probe_cc']
             assert re.match("[a-zA-Z]{2}", cc)
 
-            public_file = join(settings.public_directory, cc, basename(report_file))
+            public_file = join(settings.public_directory, cc,
+                               basename(report_file))
             self.header['report_file'] = public_file
             self.rid = db.reports.insert(self.header)
 
+            test_name = self.header['test_name']
+
             # Insert each measurement into the database
             for entry in self:
+                entry = run_process(test_name, public_file, entry)
                 entry['report_id'] = self.rid
                 db.measurements.insert(entry)
 
