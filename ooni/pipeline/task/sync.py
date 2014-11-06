@@ -100,10 +100,10 @@ def get_report_list_via_rsync(remote):
     return temp_dir
 
 
-def read_reports_from_dir(dir):
+def read_reports_from_dir(directory):
     reports = []
-    for report_file in list_report_files(dir):
-            match = re.search("^" + re.escape(dir) + "(.*)",
+    for report_file in list_report_files(directory):
+            match = re.search("^" + re.escape(directory) + "(.*)",
                               report_file)
 
             # read report file
@@ -124,9 +124,9 @@ def readin_local_reports(directories):
     print("Reading in local reports from: %s" % directories)
     reports = []
 
-    for dir in directories:
+    for directory in directories:
         # merge arrays
-        reports += read_reports_from_dir(dir)
+        reports += read_reports_from_dir(directory)
 
     return reports
 
