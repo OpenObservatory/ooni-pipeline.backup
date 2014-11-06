@@ -73,33 +73,38 @@ def check_if_report_in_database(report):
         return True
     return False
 
-# checks if new reports are available remotely and returns copies
-# them to a temporary if this is the case.
-# the name of the directory is returned by this method
+
 def get_report_list_via_rsync(remote):
+    """
+    checks if new reports are available remotely and returns copies
+    them to a temporary if this is the case.
+    the name of the directory is returned by this method
+    """
     rsync_cmd = "rsync --remove-source-files -avz -e ssh "
 
     temp_dir = tempfile.mkdtemp()
 
-    print("")
-    print("Checking for reports remotely on " + remote)
+    print("\nChecking for reports remotely on %s" % remote)
 
-    if os.system(rsync_cmd + remote + " " +  temp_dir):
-        print("An error occured while checking the remote server: "+remote)
+    # FIXME this is vulnerable to command injection
+    if os.system(rsync_cmd + remote + " " + temp_dir):
+        print("An error occured while checking the remote server: %s" % remote)
 
     if os.listdir(temp_dir) == []:
         print("No yaml files found on remote server")
         shutil.rmtree(temp_dir)
         return None
 
-    print("Some yaml files were found on the server to: "+temp_dir+ " and copied")
+    print("Some yaml files were found on the server "
+          "and copied to %s" % temp_dir)
     return temp_dir
+
 
 def read_reports_from_dir(dir):
     reports = []
     for report_file in list_report_files(dir):
             match = re.search("^" + re.escape(dir) + "(.*)",
-                      report_file)
+                              report_file)
 
             # read report file
             report = Report(report_file)
@@ -111,16 +116,20 @@ def read_reports_from_dir(dir):
 
     return reports
 
-# read in all local reports from different directories
+
 def readin_local_reports(directories):
-    print("Reading in local reports from: "+str(directories))
+    """
+    read in all local reports from different directories
+    """
+    print("Reading in local reports from: %s" % directories)
     reports = []
 
     for dir in directories:
         # merge arrays
-        reports = reports + read_reports_from_dir(dir)
+        reports += read_reports_from_dir(dir)
 
     return reports
+
 
 def process(remote_servers):
     local_reports = readin_local_reports([settings.raw_directory,
@@ -132,7 +141,7 @@ def process(remote_servers):
         # copies reports from remote server to temporary directory
         temp_dir = get_report_list_via_rsync(server)
 
-        if temp_dir != None:
+        if temp_dir is not None:
             remote_reports = read_reports_from_dir(temp_dir)
         else:
             break
@@ -146,30 +155,32 @@ def process(remote_servers):
                 # report was found in database
                 pass
             else:
-                print("Copying report into into raw directory: "+\
-                        report.report_path + " " + settings.raw_directory)
+                print("Copying report into into raw directory: %s %s" %
+                      (report.report_path, settings.raw_directory))
 
                 report_file = os.path.split(report.report_path)[-1]
                 newname = os.path.join(settings.raw_directory, report_file)
                 os.rename(report.report_path, newname)
                 count_reports += 1
 
-        print("Found "+str(count_reports)+" reports on "+ server + " that "+\
-                "were not locally present and copied them to: "+settings.raw_directory)
+        print("Found %d reports in %s that "
+              "were not locally present and copied them to: %s" %
+              (count_reports, server, settings.raw_directory))
 
         shutil.rmtree(temp_dir)
 
+
 def main():
     if not os.path.isdir(settings.raw_directory):
-        print(settings.raw_directory + " does not exist")
+        print("%s does not exist" % settings.raw_directory)
         sys.exit(1)
 
     if not os.path.isdir(settings.sanitised_directory):
-        print(settings.sanitised_directory + " does not exist")
+        print("%s does not exist" % settings.sanitised_directory)
         sys.exit(1)
 
     if not os.path.isfile(settings.remote_servers_file):
-        print(settings.remote_servers_file + " does not exist")
+        print("%s does not exist" % settings.remote_servers_file)
         sys.exit(1)
 
     with open(settings.remote_servers_file) as f:
