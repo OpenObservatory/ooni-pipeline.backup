@@ -98,13 +98,19 @@ class Measurement(object):
     def is_tcpconnect(self):
         return self.report['test_name'] == 'tcp_connect'
 
-    # evaluates if self is a control measurement for the measurement m, ignoring
-    # the start time of the measurement
-    def is_control_for_measurement(self, m):
+    # evaluates if self is a control measurement for the bridge reachability
+    # measurement m, ignoring the start time of the measurement
+    def is_control_for_bridge_measurement(self, m):
         if self.get_test_name() == m.get_test_name() and self.get_country() == 'NL':
             if self.get_address() == m.get_address():
                 return True
             if self.get_hashed_fingerprint() == m.get_hashed_fingerprint():
+                return True
+        return False
+
+    def is_control_for_tcp_measurement(self, m):
+        if self.get_test_name() == m.get_test_name() and self.get_country() == 'NL':
+            if self.get_test_input() == m.get_test_input():
                 return True
         return False
 
@@ -115,10 +121,14 @@ class Measurement(object):
 
     def add_status_field(self, controls):
         """ Iterate measurements and embed the status field."""
-        filtered_controls = filter(lambda x: x.is_control_for_measurement(self), controls)
+        filtered_controls = filter(lambda x: x.is_control_for_bridge_measurement(self), controls)
         closest_control = find_closest(filtered_controls, self)
-        status = truth_table(self.measurement, closest_control.measurement)
-        self.measurement['status'] = status
+
+        if closest_control == None:
+            self.measurement['status'] = "inconclusive"
+        else:
+            status = truth_table(self.measurement, closest_control.measurement)
+            self.measurement['status'] = status
 
     def add_start_time(self):
         self.measurement['start_time'] = self.get_start_time()
@@ -135,7 +145,7 @@ class Measurement(object):
 
         for measurement in [x for x in tcp_connects]:
             assert(measurement.get_test_name() == "tcp_connect")
-            if measurement.get_asn() == self.get_asn():
+            if self.is_control_for_tcp_measurement(measurement):
                 logging.debug("Found potential TCPConnect match: %s %s",
                               measurement.measurement, self.measurement)
                 candidate_measurements_list.append(measurement)
