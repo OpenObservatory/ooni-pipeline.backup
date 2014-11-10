@@ -1,3 +1,6 @@
+from ooni.pipeline.processor import convert2unicode
+
+
 def http_template(entry):
     if 'requests' not in entry or not entry['requests']:
         return entry
@@ -61,4 +64,5 @@ def tcp_connect(entry):
 def default(entry):
     if 'report' in entry:
         entry = entry['report']
+    entry = convert2unicode(entry)
     return entry
