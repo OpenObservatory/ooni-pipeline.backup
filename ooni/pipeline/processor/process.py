@@ -1,4 +1,4 @@
-from ooni.pipeline.processor import convert2unicode
+from ooni.pipeline.utils import convert2unicode
 
 
 def http_template(entry):
