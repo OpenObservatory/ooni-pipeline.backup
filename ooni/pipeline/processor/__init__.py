@@ -1,13 +1,5 @@
 from ooni.pipeline.processor import process, sanitise
 
-
-def convert2unicode(dictionary):
-    for k, v in dictionary.iteritems():
-        if isinstance(v, str):
-            dictionary[k] = unicode(v, errors='replace')
-        elif isinstance(v, dict):
-            convert2unicode(v)
-
 sanitisers = {
     "http_host": sanitise.http_template,
     "HTTP Host": sanitise.http_template,
