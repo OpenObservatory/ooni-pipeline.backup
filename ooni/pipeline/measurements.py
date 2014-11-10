@@ -108,9 +108,14 @@ class Measurement(object):
                 return True
         return False
 
-    def is_control_for_tcp_measurement(self, m):
-        if self.get_test_name() == m.get_test_name() and self.get_country() == 'NL':
-            if self.get_test_input() == m.get_test_input():
+    # evaluates if the measurement m was taken from the same vantage point
+    # and scanned the same destination as the bridge reachability
+    # measurement (self)
+    def is_similar_tcp_measurement(self, m):
+        if \
+            self.get_test_name() == m.get_test_name() and \
+            self.get_test_input() == m.get_test_input() and \
+            self.get_asn() == m.get_asn():
                 return True
         return False
 
@@ -145,7 +150,7 @@ class Measurement(object):
 
         for measurement in [x for x in tcp_connects]:
             assert(measurement.get_test_name() == "tcp_connect")
-            if self.is_control_for_tcp_measurement(measurement):
+            if self.is_similar_tcp_measurement(measurement):
                 logging.debug("Found potential TCPConnect match: %s %s",
                               measurement.measurement, self.measurement)
                 candidate_measurements_list.append(measurement)
