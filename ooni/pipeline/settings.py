@@ -30,3 +30,11 @@ except:
     db_ip, db_port = None, None
     mongo_client = None
     db = None
+
+# maximum distance of control measurement in hours in order to be considered a control
+# measurement
+# https://trac.torproject.org/projects/tor/ticket/13640
+try:
+    max_distance_control_measurement = int(os.environ.get('OONI_MAX_DISTANCE_CM'))
+except:
+    max_distance_control_measurement = None
