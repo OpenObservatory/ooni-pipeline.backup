@@ -1,3 +1,4 @@
+import re
 import hashlib
 from ooni.pipeline import settings
 
@@ -51,14 +52,11 @@ def bridge_reachability(entry):
         hashed_fingerprint = hashlib.sha1(fingerprint).hexdigest()
         entry['input'] = hashed_fingerprint
         entry['bridge_address'] = None
-        tor_log = ""
-        for line in entry['tor_log'].split("\n"):
-            if b['fingerprint'].upper() in line:
-                line = line.replace(b['fingerprint'].upper(),
-                                    hashed_fingerprint.upper())
-            tor_log += line
-            tor_log += '\n'
-        entry['tor_log'] = tor_log
+        regexp = ("(Learned fingerprint ([A-Z0-9]+)"
+                  "\s+for bridge (([0-9]+\.){3}[0-9]+\:\d+))|"
+                  "((new bridge descriptor .+?\s+"
+                  "at (([0-9]+\.){3}[0-9]+)))")
+        entry['tor_log'] = re.sub(regexp, "[REDACTED]", entry['tor_log'])
     else:
         entry['distributor'] = None
         hashed_fingerprint = None
