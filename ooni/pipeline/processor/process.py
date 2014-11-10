@@ -64,5 +64,5 @@ def tcp_connect(entry):
 def default(entry):
     if 'report' in entry:
         entry = entry['report']
-    entry = convert2unicode(entry)
+    convert2unicode(entry)
     return entry
