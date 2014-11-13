@@ -43,14 +43,14 @@ def main(archive_file):
             settings.sanitised_directory,
             report_filename
         )
-        report.header['report_file'] = report_filenema
+        report.header['report_file'] = report_filename
 
         report_file_sanitised = open(report_filename_sanitised, "w")
 
         safe_dump(report.header, report_file_sanitised, explicit_start=True,
-                explicit_end=True)
+                  explicit_end=True)
         safe_dump_all(report, report_file_sanitised, explicit_start=True,
-                    explicit_end=True, default_flow_style=False)
+                      explicit_end=True, default_flow_style=False)
         delete_existing_report_entries(report.header)
 
         report_file_sanitised.close()
