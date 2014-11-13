@@ -43,7 +43,8 @@ def main(archive_file):
             settings.sanitised_directory,
             report_filename
         )
-        report.header['report_file'] = report_filename
+        report.header['report_file'] = "%s/%s" % (report.header['probe_cc'],
+                                                  report_filename)
 
         report_file_sanitised = open(report_filename_sanitised, "w")
 
@@ -52,6 +53,12 @@ def main(archive_file):
         safe_dump_all(report, report_file_sanitised, explicit_start=True,
                       explicit_end=True, default_flow_style=False)
         delete_existing_report_entries(report.header)
+
+        public_report_file = os.path.join(settings.public_directory,
+                                          report.header['probe_cc'],
+                                          report_filename)
+        if os.path.isfile(public_report_file):
+            os.remove(public_report_file)
 
         report_file_sanitised.close()
         os.remove(report_file)
