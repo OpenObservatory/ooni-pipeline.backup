@@ -1,5 +1,5 @@
 import tempfile
-import gzip
+import tarfile
 import os
 
 from yaml import safe_dump_all, safe_dump
@@ -26,24 +26,27 @@ def delete_existing_report_entries(report_header):
 
 
 def main(archive_file):
-    fp, report_file = tempfile.mkstemp()
-    f = gzip.open(archive_file, 'rb')
-    while True:
-        data = f.read()
-        if not data:
-            break
-        os.write(fp, data)
-    f.close()
-    report = Report(report_file, action="sanitise")
-    report_file = generate_filename(report.header)
-    report_file_sanitised = os.path.join(
-        settings.sanitised_directory,
-        report_file
-    )
-    report.header['report_file'] = report_file
-    safe_dump(report.header, report_file_sanitised, explicit_start=True,
-              explicit_end=True)
-    safe_dump_all(report, report_file_sanitised, explicit_start=True,
-                  explicit_end=True, default_flow_style=False)
-    delete_existing_report_entries(report.header)
-    os.remove(report_file)
+    archive_tar = tarfile.open(archive_file)
+    for element in archive_tar:
+        f = archive_tar.extractfile(element)
+        fp, report_file = tempfile.mkstemp()
+        while True:
+            data = tfp.read()
+            if not data:
+                break
+            os.write(fp, data)
+        f.close()
+
+        report = Report(report_file, action="sanitise")
+        report_file = generate_filename(report.header)
+        report_file_sanitised = os.path.join(
+            settings.sanitised_directory,
+            report_file
+        )
+        report.header['report_file'] = report_file
+        safe_dump(report.header, report_file_sanitised, explicit_start=True,
+                explicit_end=True)
+        safe_dump_all(report, report_file_sanitised, explicit_start=True,
+                    explicit_end=True, default_flow_style=False)
+        delete_existing_report_entries(report.header)
+        os.remove(report_file)
