@@ -11,6 +11,7 @@ Task names:
     * export
     * sanitise
     * import
+    * restore <archived_report>
     * sync
 """ % sys.argv[0])
     sys.exit(1)
@@ -24,11 +25,15 @@ def run(task_name):
         task.publish.main()
     elif task_name == "sync":
         task.sync.main()
+    elif task_name == "restore":
+        if len(sys.argv) < 3:
+            usage()
+        task.restore.main(sys.argv[2])
     else:
         print("Invalid command!")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         usage()
     task_name = sys.argv[1]
     run(task_name)
