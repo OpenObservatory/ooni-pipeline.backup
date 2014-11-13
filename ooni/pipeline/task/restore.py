@@ -31,7 +31,7 @@ def main(archive_file):
         f = archive_tar.extractfile(element)
         fp, report_file = tempfile.mkstemp()
         while True:
-            data = tfp.read()
+            data = f.read()
             if not data:
                 break
             os.write(fp, data)
