@@ -4,9 +4,9 @@ import os
 
 from yaml import safe_dump_all, safe_dump
 
-from ooni.utils import generate_filename
 from ooni.pipeline import settings
 from ooni.pipeline.report import Report
+from ooni.pipeline.utils import generate_filename
 
 
 def delete_existing_report_entries(report_header):
