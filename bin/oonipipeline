@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.getcwd()))
 
 from ooni.pipeline import run, usage
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         usage()
     task_name = sys.argv[1]
     run(task_name)
