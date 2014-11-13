@@ -49,3 +49,30 @@ To import the data into the database and publish it to PUBLIC_DIR
 
 To export the data in the JSON format for the visualisation team.
 
+# How it works
+
+The data pipeline is comprised of 3 steps (or states, depending on how
+you want to look at it).
+When the data is submitted to a OONI collector it is synchronized with
+the aggregator.
+This is a central machine responsible for running all the data
+processing tasks, storing the collected data in a database and hosting a
+public interface to the sanitised reports. Since all the steps are
+independent from one another it is not necessary that they run on the
+machine, but it may also be more distributed.
+
+Once the data is on the aggregator machine it is said to be in the RAW
+state. The sanitise task is then run on the RAW data to remove sensitive
+information and strip out some superfluous information. A RAW copy of
+every report is also stored in a private compressed archive for future
+reference.
+Once the data is sanitised it is said to tbe in SANITISED state. At this
+point a import task is run on the data to place it inside of a database.
+The SANITISED reports are then place in a directory that is publicly
+exposed to the internet to allow people to download also a copy of the
+YAML reports.
+
+At this point is is possible to run any export task that performs
+queries on the database and produces as output some documents to be used
+in the data visualizations (think JSON, CSV, etc.).
+
