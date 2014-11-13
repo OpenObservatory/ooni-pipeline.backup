@@ -39,14 +39,19 @@ def main(archive_file):
 
         report = Report(report_file, action="sanitise")
         report_file = generate_filename(report.header)
-        report_file_sanitised = os.path.join(
+        report_filename_sanitised = os.path.join(
             settings.sanitised_directory,
             report_file
         )
         report.header['report_file'] = report_file
+
+        report_file_sanitised = open(report_filename_sanitised, "w")
+
         safe_dump(report.header, report_file_sanitised, explicit_start=True,
                 explicit_end=True)
         safe_dump_all(report, report_file_sanitised, explicit_start=True,
                     explicit_end=True, default_flow_style=False)
         delete_existing_report_entries(report.header)
+
+        report_file_sanitised.close()
         os.remove(report_file)

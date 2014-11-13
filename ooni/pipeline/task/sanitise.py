@@ -103,6 +103,7 @@ def main():
 
         archive_report(report_file)
 
+        report_file_sanitised.close()
         report.close()
 
         os.remove(report_file)
