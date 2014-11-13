@@ -38,12 +38,12 @@ def main(archive_file):
         f.close()
 
         report = Report(report_file, action="sanitise")
-        report_file = generate_filename(report.header)
+        report_filename = generate_filename(report.header)
         report_filename_sanitised = os.path.join(
             settings.sanitised_directory,
-            report_file
+            report_filename
         )
-        report.header['report_file'] = report_file
+        report.header['report_file'] = report_filenema
 
         report_file_sanitised = open(report_filename_sanitised, "w")
 
