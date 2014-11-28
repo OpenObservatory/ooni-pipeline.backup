@@ -1,5 +1,6 @@
 import tempfile
 import tarfile
+import gzip
 import os
 
 from yaml import safe_dump_all, safe_dump
@@ -26,17 +27,32 @@ def delete_existing_report_entries(report_header):
 
 
 def main(archive_file):
-    archive_tar = tarfile.open(archive_file)
-    for element in archive_tar:
-        f = archive_tar.extractfile(element)
-        fp, report_file = tempfile.mkstemp()
-        while True:
-            data = f.read()
-            if not data:
-                break
-            os.write(fp, data)
-        f.close()
+        if not os.path.isfile(archive_file):
+            print "Archive file does not exist: "+archive_file
+            return 1
 
+        # we only support tar.gz and .gz
+        if archive_file.endswith("tar.gz"):
+            archive_tar = tarfile.open(archive_file)
+            for element in archive_tar:
+                f = archive_tar.extractfile(element)
+                fp, report_file = tempfile.mkstemp()
+                while True:
+                    data = f.read()
+                    if not data:
+                        break
+                    os.write(fp, data)
+                f.close()
+        elif archive_file.endswith(".gz"):
+            fp, report_file = tempfile.mkstemp()
+            f = gzip.open(archive_file, 'rb')
+            while True:
+                data = f.read()
+                if not data:
+                    break
+                os.write(fp, data)
+            f.close()
+    
         report = Report(report_file, action="sanitise")
         report_filename = generate_filename(report.header)
         report_filename_sanitised = os.path.join(
