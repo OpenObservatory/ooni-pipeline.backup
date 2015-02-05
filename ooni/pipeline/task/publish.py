@@ -4,8 +4,12 @@ from os.path import join, basename
 from os import renames, walk
 import re
 import yaml
+import logging
 from ooni.pipeline import settings
+from ooni.pipeline.settings import log
 from ooni.pipeline.processor import run_process
+
+from multiprocessing import Manager, cpu_count, Pool
 
 
 def list_report_files(directory):
@@ -16,7 +20,7 @@ def list_report_files(directory):
 
 
 class ReportInserter(object):
-    def __init__(self, report_file, db):
+    def __init__(self, report_file, semaphore):
         try:
             # Insert the report into the database
             self.fh = open(report_file)
@@ -28,7 +32,7 @@ class ReportInserter(object):
             public_file = join(settings.public_directory, cc,
                                basename(report_file))
             self.header['report_file'] = public_file
-            self.rid = db.reports.insert(self.header)
+            self.rid = settings.db.reports.insert(self.header)
 
             test_name = self.header['test_name']
 
@@ -36,12 +40,14 @@ class ReportInserter(object):
             for entry in self:
                 entry = run_process(test_name, public_file, entry)
                 entry['report_id'] = self.rid
-                db.measurements.insert(entry)
+                settings.db.measurements.insert(entry)
 
             # Move the report into the public directory
             renames(report_file, public_file)
         except Exception, e:
             print e
+        semaphore.release()
+        log.info("Imported %s" % report_file)
 
     def __iter__(self):
         return self
@@ -58,12 +64,34 @@ class ReportInserter(object):
 
 
 def main():
-    report_count = 0
-    for report_file in list_report_files(settings.sanitised_directory):
-        ReportInserter(report_file, settings.db)
-        print("[+] Imported %s" % report_file)
-        report_count += 1
-    print("Imported %d reports" % report_count)
+
+    logfile = join(settings.sanitised_directory, "publish.log")
+    fh = logging.FileHandler(logfile)
+    log.addHandler(fh)
+
+    manager = Manager()
+    semaphore = manager.Semaphore(cpu_count())
+    pool = Pool(processes=cpu_count())
+
+    report_counter = 0
+    # iterate over report files
+    report_files = list_report_files(settings.reports_directory)
+    while True:
+        try:
+            semaphore.acquire()
+            report_file = report_files.next()
+            log.info("Importing %s" % report_file)
+            pool.apply_async(ReportInserter, (report_file, semaphore))
+            report_counter += 1
+
+        except StopIteration:
+            break
+
+    log.info("Waiting for all the tasks to finish")
+    pool.close()
+    pool.join()
+
+    log.info("Imported %d reports" % report_counter)
 
 if __name__ == "__main__":
     main()
