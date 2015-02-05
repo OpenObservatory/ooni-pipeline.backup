@@ -24,6 +24,7 @@ import re
 import os
 import sys
 import tarfile
+from multiprocessing import cpu_count, Manager, Pool
 
 from yaml import safe_dump_all, safe_dump
 from ooni.pipeline import settings
@@ -50,6 +51,45 @@ def list_report_files(directory):
                 yield os.path.join(dirpath, filename)
 
 
+def sanitise_report(report_file, semaphore):
+    match = re.search("^" + re.escape(settings.reports_directory) + "(.*)",
+                        report_file)
+
+    # read report file
+    report = Report(report_file)
+    report_header = report.header
+    report_header['report_file'] = match.group(1)
+
+    report_filename = os.path.split(report_file)[-1]
+    report_filename_sanitised = os.path.join(settings.sanitised_directory,
+                                                report_filename)
+
+    if os.path.isfile(report_filename_sanitised):
+        print("Sanitised report name already exists, overwriting: %s" %
+                report_filename_sanitised)
+    else:
+        print("New report file: %s" %
+                report_filename_sanitised)
+
+    report_file_sanitised = open(report_filename_sanitised, 'w')
+
+    safe_dump(report_header, report_file_sanitised, explicit_start=True,
+                explicit_end=True)
+
+    safe_dump_all(report, report_file_sanitised, explicit_start=True,
+                    explicit_end=True, default_flow_style=False)
+
+    print("Moving original unsanitised file %s to archive" % report_file)
+
+    archive_report(report_file)
+
+    report_file_sanitised.close()
+    report.close()
+
+    os.remove(report_file)
+
+    semaphore.release()
+
 def main():
     if not os.path.isdir(settings.archive_directory):
         print(settings.archive_directory + " does not exist")
@@ -69,51 +109,29 @@ def main():
 
     report_counter = 0
 
+    manager = Manager()
+    semaphore = manager.Semaphore(cpu_count())
+    pool = Pool(processes=cpu_count())
+
     # iterate over report files
-    for report_file in list_report_files(settings.reports_directory):
+    report_files = list_report_files(settings.reports_directory)
+    while True:
+        try:
+            semaphore.acquire()
+            report_file = report_files.next()
+            pool.apply_async(sanitise_report, (report_file, semaphore))
+            report_counter += 1
 
-        match = re.search("^" + re.escape(settings.reports_directory) + "(.*)",
-                          report_file)
+        except StopIteration:
+            break
 
-        # read report file
-        report = Report(report_file)
-        report_header = report.header
-        report_header['report_file'] = match.group(1)
-
-        report_filename = os.path.split(report_file)[-1]
-        report_filename_sanitised = os.path.join(settings.sanitised_directory,
-                                                 report_filename)
-
-        if os.path.isfile(report_filename_sanitised):
-            print("Sanitised report name already exists, overwriting: %s",
-                  report_filename_sanitised)
-        else:
-            print("New report file: %s",
-                  report_filename_sanitised)
-
-        report_file_sanitised = open(report_filename_sanitised, 'w')
-
-        safe_dump(report_header, report_file_sanitised, explicit_start=True,
-                  explicit_end=True)
-
-        safe_dump_all(report, report_file_sanitised, explicit_start=True,
-                      explicit_end=True, default_flow_style=False)
-
-        print("Moving original unsanitised file %s to archive", report_file)
-
-        archive_report(report_file)
-
-        report_file_sanitised.close()
-        report.close()
-
-        os.remove(report_file)
-
-        report_counter += 1
-
+    print("Waiting for all the tasks to finish")
+    pool.close()
+    pool.join()
     if report_counter > 0:
-        print("%d reports archived", report_counter)
+        print("%d reports archived" % report_counter)
     else:
-        print("No reports were found in the: %s", settings.reports_directory)
+        print("No reports were found in the: %s" % settings.reports_directory)
 
 if __name__ == "__main__":
     main()
