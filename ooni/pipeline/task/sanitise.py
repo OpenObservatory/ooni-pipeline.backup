@@ -24,6 +24,7 @@ import re
 import os
 import sys
 import gzip
+from multiprocessing import Manager, cpu_count, Pool
 
 from yaml import safe_dump_all, safe_dump
 from ooni.pipeline import settings
