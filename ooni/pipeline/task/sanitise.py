@@ -24,10 +24,12 @@ import re
 import os
 import sys
 import gzip
+import logging
 from multiprocessing import Manager, cpu_count, Pool
 
 from yaml import safe_dump_all, safe_dump
 from ooni.pipeline import settings
+from ooni.pipeline.settings import log
 from ooni.pipeline.report import Report
 
 
@@ -38,9 +40,9 @@ def archive_report(report_path):
     gz_file = os.path.join(settings.archive_directory, gz_name) + ".gz"
 
     if os.path.isfile(gz_file):
-            print("Archive does already exist, overwriting")
+            log.info("Archive does already exist, overwriting")
 
-    print("Archiving report: " + report_path)
+    log.info("Archiving report: " + report_path)
     infile = open(report_path, 'rb')
     outfile = gzip.open(gz_file, 'wb')
     outfile.writelines(infile)
@@ -69,10 +71,10 @@ def sanitise_report(report_file, semaphore):
                                                 report_filename)
 
     if os.path.isfile(report_filename_sanitised):
-        print("Sanitised report name already exists, overwriting: %s" %
+        log.info("Sanitised report name already exists, overwriting: %s" %
                 report_filename_sanitised)
     else:
-        print("New report file: %s" %
+        log.info("New report file: %s" %
                 report_filename_sanitised)
 
     report_file_sanitised = open(report_filename_sanitised, 'w')
@@ -83,7 +85,7 @@ def sanitise_report(report_file, semaphore):
     safe_dump_all(report, report_file_sanitised, explicit_start=True,
                     explicit_end=True, default_flow_style=False)
 
-    print("Moving original unsanitised file %s to archive" % report_file)
+    log.info("Moving original unsanitised file %s to archive" % report_file)
 
     archive_report(report_file)
 
@@ -94,21 +96,26 @@ def sanitise_report(report_file, semaphore):
 
     semaphore.release()
 
+
 def main():
-    if not os.path.isdir(settings.archive_directory):
-        print(settings.archive_directory + " does not exist")
+    if not os.path.isdir(settings.reports_directory):
+        log.error(settings.reports_directory + " does not exist")
         sys.exit(1)
 
-    if not os.path.isdir(settings.reports_directory):
-        print(settings.reports_directory + " does not exist")
+    logfile = os.path.join(settings.reports_directory, "sanitise.log")
+    fh = logging.FileHandler(logfile)
+    log.addHandler(fh)
+
+    if not os.path.isdir(settings.archive_directory):
+        log.error(settings.archive_directory + " does not exist")
         sys.exit(1)
 
     if not os.path.isfile(settings.bridge_db_mapping_file):
-        print(settings.bridge_db_mapping_file + " does not exist")
+        log.error(settings.bridge_db_mapping_file + " does not exist")
         sys.exit(1)
 
     if not os.path.isdir(settings.sanitised_directory):
-        print(settings.sanitised_directory + " does not exist")
+        log.error(settings.sanitised_directory + " does not exist")
         sys.exit(1)
 
     report_counter = 0
@@ -129,13 +136,13 @@ def main():
         except StopIteration:
             break
 
-    print("Waiting for all the tasks to finish")
+    log.info("Waiting for all the tasks to finish")
     pool.close()
     pool.join()
     if report_counter > 0:
-        print(str(report_counter) + " reports archived")
+        log.info(str(report_counter) + " reports archived")
     else:
-        print("No reports were found in the reports directory: "+ settings.reports_directory)
+        log.info("No reports were found in the reports directory: "+ settings.reports_directory)
 
 if __name__ == "__main__":
     main()

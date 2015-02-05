@@ -1,5 +1,7 @@
 import os
+import sys
 import json
+import logging
 from pymongo import MongoClient
 
 raw_directory = os.environ.get('OONI_RAW_DIR')
@@ -7,6 +9,15 @@ sanitised_directory = os.environ.get('OONI_SANITISED_DIR')
 public_directory = os.environ.get('OONI_PUBLIC_DIR')
 reports_directory = os.environ.get('OONI_RAW_DIR')
 archive_directory = os.environ.get('OONI_ARCHIVE_DIR')
+
+log_level = os.environ.get('OONI_LOG_LEVEL') or "INFO"
+log_level = getattr(logging, log_level)
+log = logging.getLogger()
+log.setLevel(log_level)
+
+ch = logging.StreamHandler(sys.stdout)
+log.addHandler(ch)
+
 
 bridge_db_mapping_file = os.environ.get('OONI_BRIDGE_DB_FILE')
 try:
