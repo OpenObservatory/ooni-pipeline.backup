@@ -23,8 +23,7 @@ from __future__ import print_function
 import re
 import os
 import sys
-import tarfile
-from multiprocessing import cpu_count, Manager, Pool
+import gzip
 
 from yaml import safe_dump_all, safe_dump
 from ooni.pipeline import settings
@@ -34,15 +33,19 @@ from ooni.pipeline.report import Report
 def archive_report(report_path):
 
     # zip files
-    tar_name = os.path.split(report_path)[-1]
-    tar_file = os.path.join(settings.archive_directory, tar_name) + ".gz"
+    gz_name = os.path.split(report_path)[-1]
+    gz_file = os.path.join(settings.archive_directory, gz_name) + ".gz"
 
-    if os.path.isfile(tar_file):
+    if os.path.isfile(gz_file):
             print("Archive does already exist, overwriting")
 
-    with tarfile.open(tar_file, "w:gz") as tar:
-        tar.add(report_path)
+    print("Archiving report: " + report_path)
+    infile = open(report_path, 'rb')
+    outfile = gzip.open(gz_file, 'wb')
+    outfile.writelines(infile)
 
+    infile.close()
+    outfile.close()
 
 def list_report_files(directory):
     for dirpath, dirname, filenames in os.walk(directory):
@@ -129,9 +132,9 @@ def main():
     pool.close()
     pool.join()
     if report_counter > 0:
-        print("%d reports archived" % report_counter)
+        print(str(report_counter) + " reports archived")
     else:
-        print("No reports were found in the: %s" % settings.reports_directory)
+        print("No reports were found in the reports directory: "+ settings.reports_directory)
 
 if __name__ == "__main__":
     main()
