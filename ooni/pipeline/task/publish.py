@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # This is what used to be called import.py
 from os.path import join, basename
-from os import renames, walk
+from os import walk, remove
+
 import re
 import yaml
+import gzip
+import shutil
 import logging
 from ooni.pipeline import settings
 from ooni.pipeline.settings import log
@@ -30,7 +33,7 @@ class ReportInserter(object):
             assert re.match("[a-zA-Z]{2}", cc)
 
             public_file = join(settings.public_directory, cc,
-                               basename(report_file))
+                               basename(report_file)+".gz")
             self.header['report_file'] = public_file
             self.rid = settings.db.reports.insert(self.header)
 
@@ -42,8 +45,13 @@ class ReportInserter(object):
                 entry['report_id'] = self.rid
                 settings.db.measurements.insert(entry)
 
-            # Move the report into the public directory
-            renames(report_file, public_file)
+            fsrc = open(report_file, 'rb')
+            fdst = gzip.open(public_file, 'wb')
+            shutil.copyfileobj(fsrc, fdst)
+            fsrc.close()
+            fdst.close()
+
+            remove(report_file)
         except Exception, e:
             print e
         semaphore.release()
