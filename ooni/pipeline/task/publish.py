@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # This is what used to be called import.py
 from os.path import join, basename, dirname
-from os import walk, remove
+from os import walk, remove, makedirs
 
 import re
 import yaml
@@ -50,7 +50,7 @@ class ReportInserter(object):
                 })
 
             try:
-                os.makedirs(dirname(public_file))
+                makedirs(dirname(public_file))
             except OSError as exc:
                 if exc.errno != 17:
                     raise exc
