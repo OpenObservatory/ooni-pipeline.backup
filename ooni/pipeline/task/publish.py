@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This is what used to be called import.py
-from os.path import join, basename
+from os.path import join, basename, dirname
 from os import walk, remove
 
 import re
@@ -35,15 +35,25 @@ class ReportInserter(object):
             public_file = join(settings.public_directory, cc,
                                basename(report_file)+".gz")
             self.header['report_file'] = public_file
-            self.rid = settings.db.reports.insert(self.header)
+            report = self.header
+            report['measurements'] = []
+            self.rid = settings.db.reports.insert(report)
 
             test_name = self.header['test_name']
 
             # Insert each measurement into the database
             for entry in self:
                 entry = run_process(test_name, report_file, entry)
-                entry['report_id'] = self.rid
-                settings.db.measurements.insert(entry)
+                settings.db.reports.update(
+                    {'_id': self.rid},
+                    {'$push': {'measurements': entry}
+                })
+
+            try:
+                os.makedirs(dirname(public_file))
+            except OSError as exc:
+                if exc.errno != 17:
+                    raise exc
 
             fsrc = open(report_file, 'rb')
             fdst = gzip.open(public_file, 'wb')
