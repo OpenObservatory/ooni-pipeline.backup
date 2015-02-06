@@ -41,7 +41,7 @@ class ReportInserter(object):
 
             # Insert each measurement into the database
             for entry in self:
-                entry = run_process(test_name, public_file, entry)
+                entry = run_process(test_name, report_file, entry)
                 entry['report_id'] = self.rid
                 settings.db.measurements.insert(entry)
 
@@ -51,7 +51,7 @@ class ReportInserter(object):
             fsrc.close()
             fdst.close()
 
-            remove(report_file)
+            #remove(report_file)
         except Exception, e:
             print e
         semaphore.release()

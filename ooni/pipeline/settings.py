@@ -37,7 +37,9 @@ try:
 
     mongo_client = MongoClient(db_ip, db_port)
     db = mongo_client.ooni
-except:
+except Exception as exc:
+    log.error("Could not find DB")
+    log.error(str(exc))
     db_ip, db_port = None, None
     mongo_client = None
     db = None
