@@ -83,7 +83,7 @@ def main():
 
     report_counter = 0
     # iterate over report files
-    report_files = list_report_files(settings.reports_directory)
+    report_files = list_report_files(settings.sanitised_directory)
     while True:
         try:
             semaphore.acquire()
