@@ -25,6 +25,8 @@ sanitisers = {
     "http_header_field_manipulation": sanitise.null,
     "HTTP Header Field Manipulation": sanitise.null,
 
+    "glasnost": sanitise.null,
+
     "Multi Protocol Traceroute Test": [sanitise.scapy_template],
     "multi_protocol_traceroute_test": [sanitise.scapy_template],
     "traceroute": [sanitise.scapy_template],
@@ -93,6 +95,8 @@ processors = {
 
     "http_header_field_manipulation": process.null,
     "HTTP Header Field Manipulation": process.null,
+
+    "glasnost": process.null,
 
     "Multi Protocol Traceroute Test": [process.scapy_template],
     "multi_protocol_traceroute_test": [process.scapy_template],
