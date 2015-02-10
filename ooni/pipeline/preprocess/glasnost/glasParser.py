@@ -8,7 +8,7 @@ pre_start  = re.compile('(\d{13}) Client (.+) ([0-9.]+) connect')
 pre_replay = re.compile(r'Received: replay (.+) as')
 
 
-def preparser(f):
+def preparser(fl, f):
     """ The real preparser """
 
     ti = {
@@ -75,7 +75,7 @@ def pre_parse_log(fl):
     if os.path.getsize(fl)==0:
         return None
     f = gzip.open(fl) if fl.endswith('.gz') else open(fl)
-    return preparser(f)
+    return preparser(fl, f)
 
 
 def parse_summary_string_log2(client_sum, server_sum):

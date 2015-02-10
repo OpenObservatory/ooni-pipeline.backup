@@ -2,10 +2,12 @@
 
 # TODO: adapt this code to process all M-Lab files rather than only Glasnost
 
+import StringIO
 import os
 import re
 import tarfile
 
+from ooni.pipeline.preprocess import glasnost
 from ooni.pipeline import settings
 
 MLAB_FILE_PATTERN = \
@@ -20,9 +22,12 @@ def list_report_files(directory):
                 yield os.path.join(dirpath, filename)
 
 
-def process_glasnost_log(pseudofile):
+def process_glasnost_log(pathname, pseudofile):
     """ Process the log of a Glasnost test """
-    print pseudofile.read()
+    sio = StringIO.StringIO(pseudofile.read())
+    test_info = glasnost.preparser(pathname, sio)
+    import json, sys; json.dump(test_info, sys.stdout, indent=4)
+    sys.stdout.write("\n\n")
 
 
 def process_glasnost_tarball(filepath):
@@ -32,7 +37,7 @@ def process_glasnost_tarball(filepath):
         if member.isreg():
             if member.path.endswith(".log"):
                 pseudofile = tarball.extractfile(member)
-                process_glasnost_log(pseudofile)
+                process_glasnost_log(member.path, pseudofile)
 
 
 def main():
