@@ -7,8 +7,10 @@ from glasMeasure import GlasMeasurement
 pre_start  = re.compile('(\d{13}) Client (.+) ([0-9.]+) connect')
 pre_replay = re.compile(r'Received: replay (.+) as')
 
-def pre_parse_log(fl):
-    """PREPARSER"""
+
+def preparser(f):
+    """ The real preparser """
+
     ti = {
         'start_time': None,
         'client_ip': None,
@@ -22,9 +24,6 @@ def pre_parse_log(fl):
         'sysinfo': None
         } # test-info
 
-    if os.path.getsize(fl)==0:
-        return None
-    f = gzip.open(fl) if fl.endswith('.gz') else open(fl)
     try:
         ts0, client_name, ti['client_ip'] = pre_start.match(f.next()).groups()
         ti['start_time']  = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(long(ts0)/1000))
@@ -68,6 +67,15 @@ def pre_parse_log(fl):
         return ti
     finally:
         f.close()
+
+
+def pre_parse_log(fl):
+    """PREPARSER"""
+
+    if os.path.getsize(fl)==0:
+        return None
+    f = gzip.open(fl) if fl.endswith('.gz') else open(fl)
+    return preparser(f)
 
 
 def parse_summary_string_log2(client_sum, server_sum):
