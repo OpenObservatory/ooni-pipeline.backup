@@ -17,6 +17,8 @@ def lookup_probe_asn(basedir, probe_ip, start_time):
         ASN_DATABASES[lookup] = handle
     handle = ASN_DATABASES[lookup]
     org = handle.org_by_addr(probe_ip)
+    if not org:
+        org = "AS0"
     return org.decode("iso-8859-1").split()[0]
 
 def lookup_geoip(basedir, probe_ip, start_time):

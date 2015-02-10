@@ -3,6 +3,7 @@
 # TODO: adapt this code to process all M-Lab files rather than only Glasnost
 
 import StringIO
+import datetime
 import os
 import re
 import tarfile
@@ -65,11 +66,13 @@ def process_glasnost_log(pathname, pseudofile):
     else:
         region_name = None
 
+    asn = lookup_probe_asn(settings.geoip_directory,
+                           test_info["client_ip"],
+                           test_info["start_timestamp"])
+
     report_header = {
         "options": {},
-        "probe_asn": lookup_probe_asn(settings.geoip_directory,
-                                      test_info["client_ip"],
-                                      test_info["start_timestamp"]),
+        "probe_asn": asn,
         "probe_cc": country_code,
         "probe_ip": test_info["client_ip"],
         "software_name": "Glasnost",
@@ -80,8 +83,21 @@ def process_glasnost_log(pathname, pseudofile):
         "data_format_version": "v2",
     }
 
-    import sys  # XXX
-    yaml.safe_dump(report_header, sys.stdout, explicit_start=True,
+    dtp = datetime.datetime.utcfromtimestamp(test_info["start_timestamp"])
+
+    yamloo_filename  = "glasnost_%s-" % test_info["proto"]
+    yamloo_filename += dtp.strftime("%Y-%m-%dT%H%M%S.%fZ-")
+    yamloo_filename += asn
+    yamloo_filename += "-"
+    yamloo_filename += test_info["mlab_server"]
+    yamloo_filename += "-probe.yamloo"
+
+    yamloo_filepath = os.path.join(settings.reports_directory,
+                                   yamloo_filename)
+
+    yamloo_file = open(yamloo_filepath, "wb")
+
+    yaml.safe_dump(report_header, yamloo_file, explicit_start=True,
                    explicit_end=True, default_flow_style=False)
 
     report = {
@@ -97,8 +113,7 @@ def process_glasnost_log(pathname, pseudofile):
     for measurement in measurements:
         report["measurements"].append(measurement.to_dict())
 
-    import sys  # XXX
-    yaml.safe_dump(report, sys.stdout, explicit_start=True,
+    yaml.safe_dump(report, yamloo_file, explicit_start=True,
                    explicit_end=True, default_flow_style=False)
 
 def process_glasnost_tarball(filepath):
