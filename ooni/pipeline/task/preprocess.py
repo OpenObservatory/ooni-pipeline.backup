@@ -10,7 +10,7 @@ import yaml
 
 from ooni.pipeline.preprocess import glasnost
 from ooni.pipeline.preprocess import lookup_probe_asn
-from ooni.pipeline.preprocess import lookup_probe_cc
+from ooni.pipeline.preprocess import lookup_geoip
 from ooni.pipeline import settings
 
 MLAB_FILE_PATTERN = \
@@ -45,14 +45,32 @@ def process_glasnost_log(pathname, pseudofile):
 
     result, warnings, interim = glasnost.glasnost_analysis_v2(measurements)
 
+    geoinfo = lookup_geoip(settings.geoip_directory, test_info["client_ip"],
+                           test_info["start_timestamp"])
+
+    if geoinfo and geoinfo["country_code"]:
+        country_code = geoinfo["country_code"].decode("iso-8859-1")
+    else:
+        country_code = None
+    if geoinfo and geoinfo["city"]:
+        city = geoinfo["city"].decode("iso-8859-1")
+    else:
+        city = None
+    if geoinfo and geoinfo["region"]:
+        region = geoinfo["region"].decode("iso-8859-1")
+    else:
+        region = None
+    if geoinfo and geoinfo["region_name"]:
+        region_name = geoinfo["region_name"].decode("iso-8859-1")
+    else:
+        region_name = None
+
     report_header = {
         "options": {},
         "probe_asn": lookup_probe_asn(settings.geoip_directory,
                                       test_info["client_ip"],
                                       test_info["start_timestamp"]),
-        "probe_cc": lookup_probe_cc(settings.geoip_directory,
-                                    test_info["client_ip"],
-                                    test_info["start_timestamp"]),
+        "probe_cc": country_code,
         "probe_ip": test_info["client_ip"],
         "software_name": "Glasnost",
         "version": "v2",
@@ -67,6 +85,9 @@ def process_glasnost_log(pathname, pseudofile):
                    explicit_end=True, default_flow_style=False)
 
     report = {
+        "probe_city": city,
+        "probe_region": region,
+        "probe_region_name": region_name,
         "test_info": test_info,
         "measurements": [],
         "result": result,

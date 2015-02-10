@@ -19,8 +19,8 @@ def lookup_probe_asn(basedir, probe_ip, start_time):
     org = handle.org_by_addr(probe_ip)
     return org.decode("iso-8859-1").split()[0]
 
-def lookup_probe_cc(basedir, probe_ip, start_time):
-    """ Lookup probe country code using GeoIP """
+def lookup_geoip(basedir, probe_ip, start_time):
+    """ Lookup geoip information """
     dtp = datetime.datetime.utcfromtimestamp(start_time)
     lookup = "%04d/%02d" % (dtp.year, dtp.month)
     if lookup not in CITY_DATABASES:
@@ -28,5 +28,4 @@ def lookup_probe_cc(basedir, probe_ip, start_time):
         handle = GeoIP.open(filepath, GeoIP.GEOIP_STANDARD)
         CITY_DATABASES[lookup] = handle
     handle = CITY_DATABASES[lookup]
-    rec = handle.record_by_addr(probe_ip)
-    return rec["country_code"].decode("iso-8859-1")
+    return handle.record_by_addr(probe_ip)
