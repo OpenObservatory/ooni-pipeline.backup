@@ -95,6 +95,20 @@ class GlasMeasurement:
         return "%s/%s/%s\t%s\t(srv: %s in %s\tcli: %s in %s)\t%srst: %s,%s,%s\n"  % \
                (self.dir, self.port, self.proto, speed, self.srv_b, self.srv_t, self.cli_b, self.cli_t, rst, self.rst_sent, self.srv_rst, self.cli_rst)
 
+    def to_dict(self):
+        """ Convert measurement to dictionary """
+        return {
+            "direction": self.dir,
+            "port": self.port,
+            "proto": self.proto,
+            "server_bytes": self.srv_b,
+            "server_time": self.srv_t,
+            "client_bytes": self.cli_b,
+            "client_time": self.cli_t,
+            "rst_sent": self.rst_sent,
+            "server_rst": self.srv_rst,
+            "client_rst": self.cli_rst,
+        }
 
     def speed(self):
         if self.dir == 'd':

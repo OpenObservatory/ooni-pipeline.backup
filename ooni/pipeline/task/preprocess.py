@@ -6,6 +6,7 @@ import StringIO
 import os
 import re
 import tarfile
+import yaml
 
 from ooni.pipeline.preprocess import glasnost
 from ooni.pipeline import settings
@@ -37,10 +38,24 @@ def process_glasnost_log(pathname, pseudofile):
     if not test_info["done"]:
         return
 
-    measurements, _ = glasnost.parse_summary_string_log2(
+    measurements, stats = glasnost.parse_summary_string_log2(
         test_info["client_sum"], test_info["server_sum"])
 
-    print measurements
+    result, warnings, interim = glasnost.glasnost_analysis_v2(measurements)
+
+    report = {
+        "test_info": test_info,
+        "measurements": [],
+        "result": result,
+        "warnings": warnings,
+        "interim": interim
+    }
+    for measurement in measurements:
+        report["measurements"].append(measurement.to_dict())
+
+    import sys  # XXX
+    yaml.safe_dump(report, sys.stdout, explicit_start=True,
+                   explicit_end=True, default_flow_style=False)
 
 def process_glasnost_tarball(filepath):
     """ Process a single glasnost tarball """
