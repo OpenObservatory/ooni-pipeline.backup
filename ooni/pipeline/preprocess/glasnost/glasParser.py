@@ -27,7 +27,7 @@ def preparser(fl, f):
     try:
         ts0, client_name, ti['client_ip'] = pre_start.match(f.next()).groups()
         ti['start_time']  = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(long(ts0)/1000))
-        ti['start_timestamp']  = long(ts0)
+        ti['start_timestamp']  = float(ts0) / 1000
         ti['mlab_server'] = fl.split('/')[-2][:-20] # get server name from directory, and shorten it
         ts1 = None
 

@@ -9,6 +9,8 @@ import tarfile
 import yaml
 
 from ooni.pipeline.preprocess import glasnost
+from ooni.pipeline.preprocess import lookup_probe_asn
+from ooni.pipeline.preprocess import lookup_probe_cc
 from ooni.pipeline import settings
 
 MLAB_FILE_PATTERN = \
@@ -45,8 +47,12 @@ def process_glasnost_log(pathname, pseudofile):
 
     report_header = {
         "options": {},
-        "probe_asn": None, #TODO
-        "probe_cc": None, # TODO
+        "probe_asn": lookup_probe_asn(settings.geoip_directory,
+                                      test_info["client_ip"],
+                                      test_info["start_timestamp"]),
+        "probe_cc": lookup_probe_cc(settings.geoip_directory,
+                                    test_info["client_ip"],
+                                    test_info["start_timestamp"]),
         "probe_ip": test_info["client_ip"],
         "software_name": "Glasnost",
         "version": "v2",
