@@ -5,6 +5,7 @@
 import StringIO
 import datetime
 import os
+import pytz
 import re
 import tarfile
 import yaml
@@ -65,6 +66,10 @@ def process_glasnost_log(pathname, pseudofile):
         region_name = geoinfo["region_name"].decode("iso-8859-1")
     else:
         region_name = None
+    if geoinfo and geoinfo["time_zone"]:
+        timezone = geoinfo["time_zone"].decode("iso-8859-1")
+    else:
+        timezone = None
 
     asn = lookup_probe_asn(settings.geoip_directory,
                            test_info["client_ip"],
@@ -84,6 +89,13 @@ def process_glasnost_log(pathname, pseudofile):
     }
 
     dtp = datetime.datetime.utcfromtimestamp(test_info["start_timestamp"])
+    if timezone:
+        dt_utc = pytz.utc.localize(dtp)
+        tzone = pytz.timezone(timezone)
+        local_dtp = tzone.normalize(dt_utc.astimezone(tzone))
+        probe_localtime = local_dtp.isoformat()
+    else:
+        probe_localtime = None
 
     yamloo_filename  = "glasnost_%s-" % test_info["proto"]
     yamloo_filename += dtp.strftime("%Y-%m-%dT%H%M%S.%fZ-")
@@ -104,6 +116,9 @@ def process_glasnost_log(pathname, pseudofile):
         "probe_city": city,
         "probe_region": region,
         "probe_region_name": region_name,
+        "probe_timezone": timezone,
+        "probe_localtime": probe_localtime,
+        "probe_utc": dtp.isoformat(),
         "test_info": test_info,
         "measurements": [],
         "result": result,
