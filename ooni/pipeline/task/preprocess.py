@@ -24,11 +24,23 @@ def list_report_files(directory):
 
 def process_glasnost_log(pathname, pseudofile):
     """ Process the log of a Glasnost test """
+
     sio = StringIO.StringIO(pseudofile.read())
     test_info = glasnost.preparser(pathname, sio)
-    import json, sys; json.dump(test_info, sys.stdout, indent=4)
-    sys.stdout.write("\n\n")
+    if not test_info:
+        return
 
+    if test_info["proto"] == "BitTorrent (v1-log)":
+        return  # Not supported
+    if not test_info["proto"]:
+        return
+    if not test_info["done"]:
+        return
+
+    measurements, _ = glasnost.parse_summary_string_log2(
+        test_info["client_sum"], test_info["server_sum"])
+
+    print measurements
 
 def process_glasnost_tarball(filepath):
     """ Process a single glasnost tarball """
