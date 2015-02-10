@@ -43,6 +43,23 @@ def process_glasnost_log(pathname, pseudofile):
 
     result, warnings, interim = glasnost.glasnost_analysis_v2(measurements)
 
+    report_header = {
+        "options": {},
+        "probe_asn": None, #TODO
+        "probe_cc": None, # TODO
+        "probe_ip": test_info["client_ip"],
+        "software_name": "Glasnost",
+        "version": "v2",
+        "start_time": test_info["start_timestamp"],
+        "test_name": test_info["proto"],
+        "test_version": "v2",
+        "data_format_version": "v2",
+    }
+
+    import sys  # XXX
+    yaml.safe_dump(report_header, sys.stdout, explicit_start=True,
+                   explicit_end=True, default_flow_style=False)
+
     report = {
         "test_info": test_info,
         "measurements": [],
