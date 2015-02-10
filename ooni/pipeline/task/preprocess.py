@@ -75,10 +75,10 @@ def process_glasnost_log(pathname, pseudofile):
         "probe_asn": asn,
         "probe_cc": country_code,
         "probe_ip": test_info["client_ip"],
-        "software_name": "Glasnost",
+        "software_name": "glasnost",
         "version": "v2",
         "start_time": test_info["start_timestamp"],
-        "test_name": test_info["proto"],
+        "test_name": "glasnost",  # XXX
         "test_version": "v2",
         "data_format_version": "v2",
     }
