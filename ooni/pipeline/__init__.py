@@ -10,7 +10,7 @@ Usage: %s <task name>
 Task names:
     * export
     * sanitise
-    * import
+    * import [file...]
     * preprocess [file...]
     * restore <archived_report>
     * sync
