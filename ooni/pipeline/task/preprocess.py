@@ -19,6 +19,9 @@ from ooni.pipeline import settings
 MLAB_FILE_PATTERN = \
 "^[0-9]{8}T[0]{6}Z-mlab[1-9]{1}-[a-z]{3}[0-9]{2}-([a-z]+)-[0-9]{4}.tgz$"
 
+NEUBOT_FILE_PATTERN = \
+"^[0-9]{4}/[0-9]{2}/[0-9]{2}/[0-9]{8}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{9}Z_([a-z]+)$"
+
 
 def list_report_files(directory):
     """ Lists the report files to process """
@@ -176,9 +179,24 @@ def process_glasnost_tarball(filepath):
                 process_glasnost_log(member.path, pseudofile)
 
 
+def process_neubot_speedtestlike(test_name, pseudofile):
+    """ Process Neubot speedtest-like result """
+    print test_name
+
+
 def process_neubot_tarball(filepath):
     """ Process a single neubot tarball """
-    print filepath
+    tarball = tarfile.open(filepath, "r")
+    for member in tarball:
+        if member.isreg():
+            result = re.match(NEUBOT_FILE_PATTERN, member.path)
+            if result:
+                test_name = result.group(1)
+                if test_name in ("speedtest", "bittorrent"):
+                    process_neubot_speedtestlike(test_name,
+                        tarball.extractfile(member))
+                else:
+                    pass  # TODO
 
 
 def process_tarball(filepath):
