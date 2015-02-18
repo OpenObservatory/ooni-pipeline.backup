@@ -89,7 +89,7 @@ def process_glasnost_log(pathname, pseudofile):
         "software_name": "glasnost",
         "version": "v2",
         "start_time": test_info["start_timestamp"],
-        "test_name": "glasnost",  # XXX
+        "test_name": test_info["proto"],
         "test_version": "v2",
         "data_format_version": "v2",
     }
