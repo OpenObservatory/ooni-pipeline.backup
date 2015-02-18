@@ -176,6 +176,11 @@ def process_glasnost_tarball(filepath):
                 process_glasnost_log(member.path, pseudofile)
 
 
+def process_neubot_tarball(filepath):
+    """ Process a single neubot tarball """
+    print filepath
+
+
 def process_tarball(filepath):
     """ Process a generic M-Lab tarball """
     result = re.match(MLAB_FILE_PATTERN, os.path.basename(filepath))
@@ -184,6 +189,8 @@ def process_tarball(filepath):
     tool = result.group(1)
     if tool == "glasnost":
         process_glasnost_tarball(filepath)
+    elif tool == "neubot":
+        process_neubot_tarball(filepath)
     else:
         raise RuntimeError("unknown tool: %s", tool)
 
