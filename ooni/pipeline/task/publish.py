@@ -65,7 +65,7 @@ class ReportInserter(object):
 
             #remove(report_file)
         except Exception, e:
-            print e
+            log.warning("Exception", exc_info=1)
         semaphore.release()
         log.info("Imported %s" % report_file)
 
