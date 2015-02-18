@@ -8,6 +8,8 @@ import yaml
 import gzip
 import shutil
 import logging
+import sys
+
 from ooni.pipeline import settings
 from ooni.pipeline.settings import log
 from ooni.pipeline.processor import run_process
@@ -91,9 +93,14 @@ def main():
     semaphore = manager.Semaphore(cpu_count())
     pool = Pool(processes=cpu_count())
 
+    arguments = sys.argv[2:]
+    if not arguments:
+        report_files = list_report_files(settings.sanitised_directory)
+    else:
+        report_files = (elem if elem.endswith(".yamloo") for elem in arguments)
+
     report_counter = 0
     # iterate over report files
-    report_files = list_report_files(settings.sanitised_directory)
     while True:
         try:
             semaphore.acquire()
