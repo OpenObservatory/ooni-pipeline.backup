@@ -124,8 +124,13 @@ def main():
     semaphore = manager.Semaphore(cpu_count())
     pool = Pool(processes=cpu_count())
 
+    arguments = sys.argv[2:]
+    if not arguments:
+        report_files = list_report_files(settings.reports_directory)
+    else:
+        report_files = (elem if elem.endswith(".yamloo") for elem in arguments)
+
     # iterate over report files
-    report_files = list_report_files(settings.reports_directory)
     while True:
         try:
             semaphore.acquire()
