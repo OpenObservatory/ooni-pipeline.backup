@@ -11,6 +11,7 @@ import logging
 import sys
 
 from ooni.pipeline import settings
+from ooni.pipeline.report import WHITELIST
 from ooni.pipeline.settings import log
 from ooni.pipeline.processor import run_process
 
@@ -45,7 +46,8 @@ class ReportInserter(object):
 
             # Insert each measurement into the database
             for entry in self:
-                entry = run_process(test_name, report_file, entry)
+                if self.header["software_name"] not in WHITELIST:
+                    entry = run_process(test_name, report_file, entry)
                 settings.db.reports.update(
                     {'_id': self.rid},
                     {'$push': {'measurements': entry}
