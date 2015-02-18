@@ -1,6 +1,6 @@
 """ Preprocess M-Lab files converting them in .yamloo files """
 
-# TODO: adapt this code to process all M-Lab files rather than only Glasnost
+# TODO: adapt this code to process more than just Neubot and Glasnost
 
 import StringIO
 import datetime
