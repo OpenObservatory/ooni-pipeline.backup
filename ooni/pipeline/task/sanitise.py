@@ -128,7 +128,7 @@ def main():
     if not arguments:
         report_files = list_report_files(settings.reports_directory)
     else:
-        report_files = (elem if elem.endswith(".yamloo") for elem in arguments)
+        report_files = (elem for elem in arguments if elem.endswith(".yamloo"))
 
     # iterate over report files
     while True:
