@@ -11,7 +11,7 @@ Task names:
     * export
     * sanitise
     * import
-    * preprocess
+    * preprocess [file...]
     * restore <archived_report>
     * sync
 """ % sys.argv[0])

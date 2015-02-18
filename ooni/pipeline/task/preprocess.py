@@ -9,6 +9,7 @@ import pytz
 import re
 import tarfile
 import yaml
+import sys
 
 from ooni.pipeline.preprocess import glasnost
 from ooni.pipeline.preprocess import lookup_probe_asn
@@ -164,6 +165,7 @@ def process_glasnost_log(pathname, pseudofile):
     yaml.safe_dump_all(report, yamloo_file, explicit_start=True,
                        explicit_end=True, default_flow_style=False)
 
+
 def process_glasnost_tarball(filepath):
     """ Process a single glasnost tarball """
     tarball = tarfile.open(filepath, "r")
@@ -176,5 +178,12 @@ def process_glasnost_tarball(filepath):
 
 def main():
     """ Main function """
-    for filepath in list_report_files(settings.raw_directory):
-        process_glasnost_tarball(filepath)
+    arguments = sys.argv[2:]
+    if arguments:
+        for argument in arguments:
+            basename = os.path.basename(argument)
+            if re.match(MLAB_FILE_PATTERN, basename):
+                process_glasnost_tarball(argument)
+    else:
+        for filepath in list_report_files(settings.raw_directory):
+            process_glasnost_tarball(filepath)
