@@ -17,7 +17,7 @@ from ooni.pipeline.preprocess import lookup_geoip
 from ooni.pipeline import settings
 
 MLAB_FILE_PATTERN = \
-"^[0-9]{8}T[0]{6}Z-mlab[1-9]{1}-[a-z]{3}[0-9]{2}-[a-z]+-[0-9]{4}.tgz$"
+"^[0-9]{8}T[0]{6}Z-mlab[1-9]{1}-[a-z]{3}[0-9]{2}-([a-z]+)-[0-9]{4}.tgz$"
 
 
 def list_report_files(directory):
@@ -176,6 +176,18 @@ def process_glasnost_tarball(filepath):
                 process_glasnost_log(member.path, pseudofile)
 
 
+def process_tarball(filepath):
+    """ Process a generic M-Lab tarball """
+    result = re.match(MLAB_FILE_PATTERN, os.path.basename(filepath))
+    if not result:
+        raise RuntimeError("File name does not match")
+    tool = result.group(1)
+    if tool == "glasnost":
+        process_glasnost_tarball(filepath)
+    else:
+        raise RuntimeError("unknown tool: %s", tool)
+
+
 def main():
     """ Main function """
     arguments = sys.argv[2:]
@@ -183,7 +195,7 @@ def main():
         for argument in arguments:
             basename = os.path.basename(argument)
             if re.match(MLAB_FILE_PATTERN, basename):
-                process_glasnost_tarball(argument)
+                process_tarball(argument)
     else:
         for filepath in list_report_files(settings.raw_directory):
-            process_glasnost_tarball(filepath)
+            process_tarball(filepath)
