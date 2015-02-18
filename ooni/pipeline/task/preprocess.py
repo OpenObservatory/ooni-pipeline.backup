@@ -12,9 +12,9 @@ import tarfile
 import yaml
 import sys
 
-from ooni.pipeline.preprocess import glasnost
-from ooni.pipeline.preprocess import lookup_probe_asn
-from ooni.pipeline.preprocess import lookup_geoip
+from ooni.pipeline.preprocessor import glasnost
+from ooni.pipeline.preprocessor import lookup_probe_asn
+from ooni.pipeline.preprocessor import lookup_geoip
 from ooni.pipeline.settings import log
 from ooni.pipeline import settings
 
