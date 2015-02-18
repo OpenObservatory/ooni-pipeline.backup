@@ -4,6 +4,7 @@
 
 import StringIO
 import datetime
+import json
 import os
 import pytz
 import re
@@ -14,6 +15,7 @@ import sys
 from ooni.pipeline.preprocess import glasnost
 from ooni.pipeline.preprocess import lookup_probe_asn
 from ooni.pipeline.preprocess import lookup_geoip
+from ooni.pipeline.settings import log
 from ooni.pipeline import settings
 
 MLAB_FILE_PATTERN = \
@@ -181,7 +183,90 @@ def process_glasnost_tarball(filepath):
 
 def process_neubot_speedtestlike(test_name, pseudofile):
     """ Process Neubot speedtest-like result """
-    print test_name
+    try:
+
+        data = json.load(pseudofile)
+
+        geoinfo = lookup_geoip(settings.geoip_directory, data["real_address"],
+                               int(data["timestamp"]))
+
+        if geoinfo and geoinfo["country_code"]:
+            country_code = geoinfo["country_code"].decode("iso-8859-1")
+        else:
+            country_code = None
+        if geoinfo and geoinfo["city"]:
+            city = geoinfo["city"].decode("iso-8859-1")
+        else:
+            city = None
+        if geoinfo and geoinfo["region"]:
+            region = geoinfo["region"].decode("iso-8859-1")
+        else:
+            region = None
+        if geoinfo and geoinfo["region_name"]:
+            region_name = geoinfo["region_name"].decode("iso-8859-1")
+        else:
+            region_name = None
+        if geoinfo and geoinfo["time_zone"]:
+            timezone = geoinfo["time_zone"].decode("iso-8859-1")
+        else:
+            timezone = None
+
+        asn = lookup_probe_asn(settings.geoip_directory, data["real_address"],
+                               int(data["timestamp"]))
+
+        report_header = {
+            "options": {},
+            "probe_asn": asn,
+            "probe_cc": country_code,
+            "probe_ip": data["real_address"],
+            "software_name": "neubot",
+            "version": data["neubot_version"],
+            "start_time": int(data["timestamp"]),
+            "test_name": test_name,
+            "test_version": data["test_version"],
+            "data_format_version": 1.0,
+        }
+
+        dtp = datetime.datetime.utcfromtimestamp(int(data["timestamp"]))
+        if timezone:
+            dt_utc = pytz.utc.localize(dtp)
+            tzone = pytz.timezone(timezone)
+            local_dtp = tzone.normalize(dt_utc.astimezone(tzone))
+            probe_localtime = local_dtp.isoformat()
+        else:
+            probe_localtime = None
+
+        yamloo_filename  = "neubot_%s-" % test_name
+        yamloo_filename += dtp.strftime("%Y-%m-%dT%H%M%S.%fZ-")
+        yamloo_filename += asn
+        yamloo_filename += "-"
+        yamloo_filename += data["remote_address"]
+        yamloo_filename += "-probe.yamloo"
+
+        yamloo_filepath = os.path.join(settings.reports_directory,
+                                       yamloo_filename)
+
+        yamloo_file = open(yamloo_filepath, "wb")
+
+        yaml.safe_dump(report_header, yamloo_file, explicit_start=True,
+                       explicit_end=True, default_flow_style=False)
+
+        report_info = {
+            "probe_city": city,
+            "probe_region": region,
+            "probe_region_name": region_name,
+            "probe_timezone": timezone,
+            "probe_localtime": probe_localtime,
+        }
+
+        yaml.safe_dump(report_info, yamloo_file, explicit_start=True,
+                       explicit_end=True, default_flow_style=False)
+
+        yaml.safe_dump(data, yamloo_file, explicit_start=True,
+                       explicit_end=True, default_flow_style=False)
+
+    except:
+        log.warning("Cannot process Neubot data", exc_info=1)
 
 
 def process_neubot_tarball(filepath):
