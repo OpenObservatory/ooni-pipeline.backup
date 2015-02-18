@@ -22,7 +22,7 @@ MLAB_FILE_PATTERN = \
 "^[0-9]{8}T[0]{6}Z-mlab[1-9]{1}-[a-z]{3}[0-9]{2}-([a-z]+)-[0-9]{4}.tgz$"
 
 NEUBOT_FILE_PATTERN = \
-"^[0-9]{4}/[0-9]{2}/[0-9]{2}/[0-9]{8}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{9}Z_([a-z]+)$"
+r"^[0-9]{4}/[0-9]{2}/[0-9]{2}/[0-9]{8}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{9}Z_([a-z]+)$"
 
 
 def list_report_files(directory):
@@ -48,7 +48,7 @@ def process_glasnost_log(pathname, pseudofile):
     if not test_info["done"]:
         return
 
-    measurements, stats = glasnost.parse_summary_string_log2(
+    measurements, _ = glasnost.parse_summary_string_log2(
         test_info["client_sum"], test_info["server_sum"])
 
     result, warnings, interim = glasnost.glasnost_analysis_v2(measurements)
@@ -103,7 +103,7 @@ def process_glasnost_log(pathname, pseudofile):
     else:
         probe_localtime = None
 
-    yamloo_filename  = "glasnost_%s-" % test_info["proto"]
+    yamloo_filename = "glasnost_%s-" % test_info["proto"]
     yamloo_filename += dtp.strftime("%Y-%m-%dT%H%M%S.%fZ-")
     yamloo_filename += asn
     yamloo_filename += "-"
@@ -236,7 +236,7 @@ def process_neubot_speedtestlike(test_name, pseudofile):
         else:
             probe_localtime = None
 
-        yamloo_filename  = "neubot_%s-" % test_name
+        yamloo_filename = "neubot_%s-" % test_name
         yamloo_filename += dtp.strftime("%Y-%m-%dT%H%M%S.%fZ-")
         yamloo_filename += asn
         yamloo_filename += "-"
