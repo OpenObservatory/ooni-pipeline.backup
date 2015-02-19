@@ -250,7 +250,7 @@ def glasnost_analysis_v2(measurements):
     else:
         assert app_verdict==port_verdict=='noisy'
         r['verdict'] = 'UNDEF'
-        r['vreason']  = 'nosiy measurements'
+        r['vreason']  = 'noisy measurements'
 
     if len(dirs)==1 and r['verdict']=='OK':
         # for single directional tests, we cannot be sure
