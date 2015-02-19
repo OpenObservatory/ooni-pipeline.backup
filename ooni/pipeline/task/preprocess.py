@@ -240,16 +240,22 @@ def process_neubot_speedtestlike(test_name, pseudofile):
         yaml.safe_dump(report_header, yamloo_file, explicit_start=True,
                        explicit_end=True, default_flow_style=False)
 
-        report_info = {
+        # Remove duplicates, normalize type, add extra geographic information
+        del data["neubot_version"]
+        del data["real_address"]
+        del data["test_version"]
+        del data["timestamp"]
+        for key in ("connect_time", "download_speed", "latency",
+                    "upload_speed"):
+            if key in data:
+                data[key] = float(data[key])
+        data.extend({
             "probe_city": city,
             "probe_region": region,
             "probe_region_name": region_name,
             "probe_timezone": timezone,
             "probe_localtime": probe_localtime,
-        }
-
-        yaml.safe_dump(report_info, yamloo_file, explicit_start=True,
-                       explicit_end=True, default_flow_style=False)
+        })
 
         yaml.safe_dump(data, yamloo_file, explicit_start=True,
                        explicit_end=True, default_flow_style=False)
