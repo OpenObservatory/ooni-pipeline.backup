@@ -164,7 +164,10 @@ def process_glasnost_tarball(filepath):
         if member.isreg():
             if member.path.endswith(".log"):
                 pseudofile = tarball.extractfile(member)
-                process_glasnost_log(member.path, pseudofile)
+                try:
+                    process_glasnost_log(member.path, pseudofile)
+                except:
+                    log.warning("Cannot process Glasnost data", exc_info=1)
 
 
 def process_neubot_speedtestlike(test_name, pseudofile):
