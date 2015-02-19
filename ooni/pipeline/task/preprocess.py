@@ -125,50 +125,38 @@ def process_glasnost_log(pathname, pseudofile):
     del test_info["start_timestamp"]
     del test_info["start_time"]
 
-    report_info = {
+    report = {
         "probe_city": city,
         "probe_region": region,
         "probe_region_name": region_name,
         "probe_timezone": timezone,
         "probe_localtime": probe_localtime,
-    }
-    report_info["test_completed"] = test_info.pop("done")
-    for key, value in test_info.items():
-        report_info[key] = value
-    report_info["measurements_analysis"] = {
-        "download": {
-            "payload_test": result["d_app_diff"],
-            "verdict": result["d_failv"],
-            "port_test": result["d_port_diff"],
-        },
-        "upload": {
-            "payload_test": result["u_app_diff"],
-            "verdict": result["u_failv"],
-            "port_test": result["u_port_diff"],
-        },
-        "seen_forged_rsts": result["has_forgrst"],
-        "verdict": result["verdict"],
-        "verdict_reason": result["vreason"],
-    }
-
-    analysis_extra = {
-        "analysis_extra_info": {
-            "warnings": warnings,
-            "interim_results": interim,
-        },
-    }
-    measurements_sect = {
+        "test_completed": test_info.pop("done"),
         "measurements": [elem.to_dict() for elem in measurements],
+        "measurements_analysis": {
+            "download": {
+                "payload_test": result["d_app_diff"],
+                "verdict": result["d_failv"],
+                "port_test": result["d_port_diff"],
+            },
+            "upload": {
+                "payload_test": result["u_app_diff"],
+                "verdict": result["u_failv"],
+                "port_test": result["u_port_diff"],
+            },
+            "seen_forged_rsts": result["has_forgrst"],
+            "verdict": result["verdict"],
+            "verdict_reason": result["vreason"],
+            "analysis_extra_info": {
+                "warnings": warnings,
+                "interim_results": interim,
+            },
+        }
     }
+    report.update(test_info)
 
-    report = [
-        report_info,
-        analysis_extra,
-        measurements_sect,
-    ]
-
-    yaml.safe_dump_all(report, yamloo_file, explicit_start=True,
-                       explicit_end=True, default_flow_style=False)
+    yaml.safe_dump(report, yamloo_file, explicit_start=True,
+                   explicit_end=True, default_flow_style=False)
 
 
 def process_glasnost_tarball(filepath):
