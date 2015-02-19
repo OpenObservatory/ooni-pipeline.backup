@@ -147,10 +147,8 @@ def process_glasnost_log(pathname, pseudofile):
             "seen_forged_rsts": result["has_forgrst"],
             "verdict": result["verdict"],
             "verdict_reason": result["vreason"],
-            "analysis_extra_info": {
-                "warnings": warnings,
-                "interim_results": interim,
-            },
+            "warnings": warnings,
+            "interim_results": interim,
         }
     }
     report.update(test_info)
