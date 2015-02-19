@@ -249,6 +249,10 @@ def process_neubot_speedtestlike(test_name, pseudofile):
                     "upload_speed"):
             if key in data:
                 data[key] = float(data[key])
+        for key in ("privacy_informed", "privacy_can_collect",
+                    "privacy_can_publish"):
+            if key in data:
+                data[key] = bool(int((data[key])))
         data.update({
             "probe_city": city,
             "probe_region": region,
