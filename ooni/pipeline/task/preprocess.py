@@ -249,7 +249,7 @@ def process_neubot_speedtestlike(test_name, pseudofile):
                     "upload_speed"):
             if key in data:
                 data[key] = float(data[key])
-        data.extend({
+        data.update({
             "probe_city": city,
             "probe_region": region,
             "probe_region_name": region_name,
