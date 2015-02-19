@@ -1,5 +1,6 @@
 # Glasnost Parser v2.
 # Developed 2011/2012 by Hadi Asghari (http://deeppacket.info)
+# and released under the BSD 3 clause license.
 
 import time
 import os,sys, glob
