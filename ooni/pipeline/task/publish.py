@@ -61,7 +61,7 @@ class ReportInserter(object):
             fsrc.close()
             fdst.close()
 
-            #remove(report_file)
+            remove(report_file)
         except Exception, e:
             print e
         semaphore.release()
