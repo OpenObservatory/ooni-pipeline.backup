@@ -8,7 +8,10 @@ import yaml
 import gzip
 import shutil
 import logging
+import sys
+
 from ooni.pipeline import settings
+from ooni.pipeline.report import WHITELIST
 from ooni.pipeline.settings import log
 from ooni.pipeline.processor import run_process
 
@@ -43,7 +46,8 @@ class ReportInserter(object):
 
             # Insert each measurement into the database
             for entry in self:
-                entry = run_process(test_name, report_file, entry)
+                if self.header["software_name"] not in WHITELIST:
+                    entry = run_process(test_name, report_file, entry)
                 settings.db.reports.update(
                     {'_id': self.rid},
                     {'$push': {'measurements': entry}
@@ -63,7 +67,7 @@ class ReportInserter(object):
 
             remove(report_file)
         except Exception, e:
-            print e
+            log.warning("Exception", exc_info=1)
         semaphore.release()
         log.info("Imported %s" % report_file)
 
@@ -91,9 +95,14 @@ def main():
     semaphore = manager.Semaphore(cpu_count())
     pool = Pool(processes=cpu_count())
 
+    arguments = sys.argv[2:]
+    if not arguments:
+        report_files = list_report_files(settings.sanitised_directory)
+    else:
+        report_files = (elem for elem in arguments if elem.endswith(".yamloo"))
+
     report_counter = 0
     # iterate over report files
-    report_files = list_report_files(settings.sanitised_directory)
     while True:
         try:
             semaphore.acquire()

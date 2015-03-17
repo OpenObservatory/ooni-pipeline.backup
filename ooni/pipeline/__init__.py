@@ -10,7 +10,8 @@ Usage: %s <task name>
 Task names:
     * export
     * sanitise
-    * import
+    * import [file...]
+    * preprocess [file...]
     * restore <archived_report>
     * sync
 """ % sys.argv[0])
@@ -25,6 +26,8 @@ def run(task_name):
         task.publish.main()
     elif task_name == "sync":
         task.sync.main()
+    elif task_name == "preprocess":
+        task.preprocess.main()
     elif task_name == "restore":
         if len(sys.argv) < 3:
             usage()

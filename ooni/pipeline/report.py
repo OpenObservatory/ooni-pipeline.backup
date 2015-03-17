@@ -2,6 +2,9 @@ from yaml import safe_load_all
 
 from ooni.pipeline.processor import run_process, run_sanitise
 
+# This is more robust than blacklisting only "ooni"
+WHITELIST = ("glasnost", "neubot")
+
 
 class Report(object):
 
@@ -13,9 +16,13 @@ class Report(object):
         self.action = action
 
     def sanitise(self, entry):
+        if self.header["software_name"] in WHITELIST:
+            return entry
         return run_sanitise(self.header['test_name'], self.report_path, entry)
 
     def process(self, entry):
+        if self.header["software_name"] in WHITELIST:
+            return entry
         return run_process(self.header['test_name'], self.report_path, entry)
 
     def next_entry(self):

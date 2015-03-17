@@ -9,6 +9,7 @@ sanitised_directory = os.environ.get('OONI_SANITISED_DIR')
 public_directory = os.environ.get('OONI_PUBLIC_DIR')
 reports_directory = os.environ.get('OONI_RAW_DIR')
 archive_directory = os.environ.get('OONI_ARCHIVE_DIR')
+geoip_directory = os.environ.get('OONI_GEOIP_DIR')
 
 log_level = os.environ.get('OONI_LOG_LEVEL') or "INFO"
 log_level = getattr(logging, log_level)
