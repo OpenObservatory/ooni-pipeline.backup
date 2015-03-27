@@ -11,19 +11,20 @@ import logging
 from ooni.pipeline import settings
 from ooni.pipeline.settings import log
 from ooni.pipeline.processor import run_process
+from ooni.pipeline.db import create_database
 
 from multiprocessing import Manager, cpu_count, Pool
 
 
 def list_report_files(directory):
-    for dirpath, dirname, filenames in walk(directory):
+    for dirpath, _, filenames in walk(directory):
         for filename in filenames:
             if filename.endswith(".yamloo"):
                 yield join(dirpath, filename)
 
 
 class ReportInserter(object):
-    def __init__(self, report_file, semaphore):
+    def __init__(self, report_file, db, semaphore):
         try:
             # Insert the report into the database
             self.fh = open(report_file)
@@ -37,17 +38,14 @@ class ReportInserter(object):
             self.header['report_file'] = public_file
             report = self.header
             report['measurements'] = []
-            self.rid = settings.db.reports.insert(report)
+            self.rid = db.new_report(report)
 
             test_name = self.header['test_name']
 
             # Insert each measurement into the database
             for entry in self:
                 entry = run_process(test_name, report_file, entry)
-                settings.db.reports.update(
-                    {'_id': self.rid},
-                    {'$push': {'measurements': entry}
-                })
+                db.add_measurement(self.rid, entry)
 
             try:
                 makedirs(dirname(public_file))
@@ -82,6 +80,7 @@ class ReportInserter(object):
 
 
 def main():
+    db = create_database()
 
     logfile = join(settings.sanitised_directory, "publish.log")
     fh = logging.FileHandler(logfile)
@@ -99,7 +98,7 @@ def main():
             semaphore.acquire()
             report_file = report_files.next()
             log.info("Importing %s" % report_file)
-            pool.apply_async(ReportInserter, (report_file, semaphore))
+            pool.apply_async(ReportInserter, (report_file, db, semaphore))
             report_counter += 1
 
         except StopIteration:
