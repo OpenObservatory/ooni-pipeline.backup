@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import logging
-from pymongo import MongoClient
 
 raw_directory = os.environ.get('OONI_RAW_DIR')
 sanitised_directory = os.environ.get('OONI_SANITISED_DIR')
@@ -34,15 +33,10 @@ except:
 
 try:
     db_ip, db_port = os.environ.get('OONI_DB_IP'), int(os.environ.get('OONI_DB_PORT'))
-
-    mongo_client = MongoClient(db_ip, db_port)
-    db = mongo_client.ooni
 except Exception as exc:
     log.error("Could not find DB")
     log.error(str(exc))
     db_ip, db_port = None, None
-    mongo_client = None
-    db = None
 
 # maximum distance of control measurement in hours in order to be considered a control
 # measurement
